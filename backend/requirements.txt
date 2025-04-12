@@ -1,0 +1,12 @@
+fastapi==0.104.1
+uvicorn==0.23.2
+requests==2.31.0
+beautifulsoup4==4.12.2
+python-multipart==0.0.6
+webcolors==1.13
+extcolors==1.0.0
+Pillow>=9.5.0
+httpx==0.24.1
+lxml==4.9.3
+cssutils==2.9.0
+validators==0.22.0
