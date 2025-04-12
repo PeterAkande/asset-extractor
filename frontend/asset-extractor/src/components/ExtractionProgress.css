@@ -5,7 +5,7 @@
   text-align: center;
   box-shadow: var(--shadow-md);
   margin: 32px 0;
-  border: 1px solid rgba(66, 133, 244, 0.15);
+  border: 1px solid rgba(66, 133, 244, 0.3); /* More visible border */
   transition: all 0.3s ease;
   animation: fadeIn 0.3s;
 }
@@ -13,12 +13,12 @@
 .extraction-progress h3 {
   margin-top: 0;
   margin-bottom: 16px;
-  color: var(--text-color);
+  color: #202124; /* Darker text for better contrast */
   font-weight: 600;
 }
 
 .extraction-progress p {
-  color: var(--text-secondary);
+  color: #5f6368; /* Darker secondary text color */
   margin-bottom: 20px;
   font-size: 15px;
 }
@@ -34,26 +34,28 @@
 }
 
 .progress-bar {
-  height: 8px;
-  background-color: var(--google-gray-200);
-  border-radius: 4px;
+  height: 10px; /* Slightly taller */
+  background-color: #f1f3f4; /* Lighter background */
+  border-radius: 5px;
   overflow: hidden;
   margin-bottom: 12px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.08); /* Add subtle border */
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(to right, var(--google-blue), var(--google-green));
+  background: linear-gradient(to right, #4285F4, #0F9D58); /* Stronger Google blue to green gradient */
   border-radius: 4px;
   transition: width 0.5s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* Add subtle shadow for depth */
 }
 
 .progress-percentage {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--google-blue);
-  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 700; /* Bolder text */
+  color: #1a73e8; /* Darker Google blue for better contrast */
+  margin-top: 10px;
 }
 
 .extraction-error {
