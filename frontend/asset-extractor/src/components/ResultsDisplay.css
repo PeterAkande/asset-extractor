@@ -8,131 +8,164 @@
   min-height: 70vh;
 }
 
+/* Redesigned tab navigation - Zenefits inspired */
 .results-header {
-  background-color: white;
-  border-bottom: 1px solid var(--border-color);
+  background: white;
+  border-bottom: none;
   padding: 0;
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.results-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  word-break: break-word;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .tab-buttons {
   display: flex;
   overflow-x: auto;
-  scrollbar-width: none; /* For Firefox */
+  scrollbar-width: none;
   position: relative;
-  padding: 0 20px;
+  padding: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  margin: 0 20px;
 }
 
 .tab-buttons::-webkit-scrollbar {
-  display: none; /* For Chrome and Safari */
+  display: none;
 }
 
-/* Redesigned tab button */
-.tab-button {
-  padding: 20px 24px;
-  background: none;
-  color: var(--google-gray-700);
-  font-weight: 500;
-  font-size: 15px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  position: relative;
-  overflow: hidden;
-  margin: 0 4px;
-  min-width: 140px;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-/* Material icon in tab */
-.tab-button .material-icons {
-  font-size: 20px;
-  transition: transform 0.3s ease;
-}
-
-/* Hover effect */
-.tab-button:hover {
-  color: var(--google-blue);
-  background-color: rgba(66, 133, 244, 0.04);
-}
-
-.tab-button:hover .material-icons {
-  transform: scale(1.1);
-}
-
-/* Active tab styling */
-.tab-button.active {
-  color: var(--google-blue);
-  font-weight: 600;
-  border-bottom-color: var(--google-blue);
-}
-
-/* Animated sliding indicator for active tab */
-.tab-button.active::after {
+.tab-buttons::after {
   content: '';
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 100%;
-  height: 3px;
-  background: var(--brand-gradient);
-  transform-origin: left;
-  animation: slideIn 0.3s forwards;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    rgba(66, 133, 244, 0.03),
+    rgba(66, 133, 244, 0.05) 50%,
+    rgba(66, 133, 244, 0.03)
+  );
 }
 
-/* Glowing dot indicator for tab count */
-.tab-button .tab-count {
-  background: var(--google-blue-light);
+/* Refined tab button */
+.tab-button {
+  padding: 20px 16px;
+  background: none;
+  color: #667085; /* More refined gray */
+  font-weight: 500;
+  font-size: 14px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  margin: 0;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+  opacity: 0.85;
+  border-radius: 0;
+}
+
+/* Enhanced hover effect */
+.tab-button:hover {
+  color: #344054; /* Slightly darker on hover */
+  background: linear-gradient(to bottom, rgba(249, 250, 251, 0), rgba(249, 250, 251, 0.8));
+  opacity: 1;
+}
+
+/* Material icon in tab with refined size */
+.tab-button .material-icons {
+  font-size: 18px;
+  transition: all 0.3s ease;
+  opacity: 0.9;
+}
+
+/* Active tab styling with subtle gradient */
+.tab-button.active {
   color: var(--google-blue);
-  border-radius: 12px;
-  padding: 3px 8px;
-  font-size: 13px;
   font-weight: 600;
+  border-bottom-color: transparent; /* Remove default border */
+  opacity: 1;
+}
+
+/* Elegant active tab indicator */
+.tab-button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--google-blue);
+  transform: translateX(-50%);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.tab-button.active::after {
+  width: 100%;
+}
+
+/* Professional badge for tab count */
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 500;
   transition: all 0.3s;
+  background: #F2F4F7; /* Light gray background */
+  color: #475467; /* Medium gray text */
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
 }
 
 .tab-button:hover .tab-count {
-  background: rgba(66, 133, 244, 0.15);
+  background: #EAECF0;
+  color: #344054;
 }
 
 .tab-button.active .tab-count {
-  background: var(--google-blue);
-  color: white;
+  background: rgba(66, 133, 244, 0.12);
+  color: var(--google-blue);
 }
 
-@keyframes slideIn {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+/* Add subtle active state shadow */
+.tab-button.active {
+  position: relative;
+}
+
+.tab-button.active::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(66, 133, 244, 0.0) 0%, rgba(66, 133, 244, 0.2) 50%, rgba(66, 133, 244, 0.0) 100%);
+  filter: blur(2px);
+}
+
+/* Tab content transitions */
+.tab-content {
+  animation: smoothFadeIn 0.4s ease;
+}
+
+@keyframes smoothFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .results-content {
   padding: 40px;
   animation: fadeIn 0.5s ease;
   min-height: 50vh;
-}
-
-/* Tab content transitions */
-.tab-content {
-  animation: fadeIn 0.4s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Colors tab */
@@ -554,47 +587,6 @@
   background: rgba(255, 255, 255, 0.25);
 }
 
-.modal-actions {
-  display: flex;
-  gap: 16px;
-  margin-top: 20px;
-  justify-content: center;
-}
-
-.download-modal-btn, .view-original-btn {
-  padding: 12px 20px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  font-size: 15px;
-  transition: all 0.2s;
-  text-decoration: none;
-}
-
-.download-modal-btn {
-  background: white;
-  color: #202124; /* Darker text color for better visibility */
-  border: 1px solid rgba(0, 0, 0, 0.1); /* Add subtle border */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Add shadow for depth */
-}
-
-.download-modal-btn:hover {
-  background: #f8f9fa; /* Slightly darker on hover */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.view-original-btn {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3); /* Add subtle border */
-}
-
-.view-original-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
 /* Empty state styling */
 .empty-state {
   display: flex;
@@ -649,13 +641,17 @@
   }
   
   .tab-button {
-    padding: 16px;
-    font-size: 14px;
-    min-width: 100px;
+    padding: 16px 12px;
+    font-size: 13px;
+    min-width: auto;
+    justify-content: center;
   }
   
-  .tab-button .material-icons {
-    font-size: 18px;
+  .tab-count {
+    min-width: 20px;
+    height: 20px;
+    font-size: 11px;
+    padding: 0 4px;
   }
   
   .color-grid, .image-grid, .font-grid {
