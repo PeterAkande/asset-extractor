@@ -96,9 +96,68 @@ const FontCard = ({ font }: { font: FontInfo }) => {
   );
 };
 
+// Video Card Component
+const VideoCard = ({ src }: { src: string }) => {
+  const [showControls, setShowControls] = useState(false);
+  const isEmbedded = src.includes('youtube.com') || src.includes('vimeo.com') || src.includes('dailymotion.com');
+  const filename = src.split('/').pop() || 'video.mp4';
+  
+  const handleDownload = () => {
+    if (!isEmbedded) {
+      fetch(src)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          window.URL.revokeObjectURL(url);
+        })
+        .catch(err => console.error('Error downloading video:', err));
+    }
+  };
+  
+  return (
+    <div className="video-card">
+      <div 
+        className="video-container"
+        onMouseEnter={() => setShowControls(true)}
+        onMouseLeave={() => setShowControls(false)}
+      >
+        {isEmbedded ? (
+          <iframe
+            src={src}
+            allowFullScreen
+            title="Embedded video"
+          ></iframe>
+        ) : (
+          <video 
+            src={src} 
+            controls={showControls}
+            poster={`${src}#t=0.1`}
+            preload="metadata"
+          ></video>
+        )}
+      </div>
+      <div className="video-actions">
+        <a href={src} target="_blank" rel="noopener noreferrer" className="view-video-btn">
+          <span className="material-icons">open_in_new</span>
+          View Original
+        </a>
+        {!isEmbedded && (
+          <button onClick={handleDownload} className="download-video-btn">
+            <span className="material-icons">download</span>
+            Download
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Helper function to determine if a color is light or dark
 function isLightColor(rgb: number[]): boolean {
-  // Luminance calculation: 0.299*R + 0.587*G + 0.114*B
   const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
   return luminance > 0.5;
 }
@@ -106,6 +165,7 @@ function isLightColor(rgb: number[]): boolean {
 const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
   const [activeTab, setActiveTab] = useState('colors');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   
   if (!results) {
     return <div className="no-data">No results to display</div>;
@@ -113,10 +173,35 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
   
   const { colors, fonts, assets } = results;
   const allColors = [...(colors.from_css || []), ...(colors.from_images || [])];
+  
+  const validImageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico'];
   const validImages = (assets.images || []).filter(img => 
-    !img.startsWith('data:') && 
-    (img.endsWith('.jpg') || img.endsWith('.jpeg') || img.endsWith('.png') || img.endsWith('.gif') || img.endsWith('.webp') || img.endsWith('.svg'))
+    !img.startsWith('data:') || 
+    validImageExtensions.some(ext => img.toLowerCase().includes(ext)) ||
+    /\.(jpe?g|png|gif|webp|svg|bmp|ico)(\?.*)?$/i.test(img)
   );
+  
+  const validVideoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.wmv', '.flv'];
+  const validVideos = (assets.videos || []).filter(vid => 
+    validVideoExtensions.some(ext => vid.toLowerCase().includes(ext)) ||
+    /\.(mp4|webm|ogg|mov|avi|wmv|flv)(\?.*)?$/i.test(vid) ||
+    vid.includes('youtube.com') ||
+    vid.includes('vimeo.com') ||
+    vid.includes('dailymotion.com') ||
+    vid.includes('facebook.com/plugins/video')
+  );
+  
+  const filteredImages = search ? 
+    validImages.filter(img => img.toLowerCase().includes(search.toLowerCase())) : 
+    validImages;
+  
+  const filteredVideos = search ?
+    validVideos.filter(vid => vid.toLowerCase().includes(search.toLowerCase())) :
+    validVideos;
+  
+  const filteredFonts = search && fonts ?
+    fonts.filter(font => font.name.toLowerCase().includes(search.toLowerCase())) :
+    fonts;
   
   return (
     <div className="results-display">
@@ -139,6 +224,14 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
             <span className="tab-count">{validImages.length}</span>
           </button>
           <button 
+            className={`tab-button ${activeTab === 'videos' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('videos')}
+          >
+            <span className="material-icons">videocam</span>
+            <span>Videos</span>
+            <span className="tab-count">{validVideos.length}</span>
+          </button>
+          <button 
             className={`tab-button ${activeTab === 'fonts' ? 'active' : ''}`} 
             onClick={() => setActiveTab('fonts')}
           >
@@ -146,6 +239,21 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
             <span>Fonts</span>
             <span className="tab-count">{fonts?.length || 0}</span>
           </button>
+        </div>
+
+        <div className="search-container">
+          <input
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="search-input"
+          />
+          {search && (
+            <button className="clear-search" onClick={() => setSearch('')}>
+              <span className="material-icons">clear</span>
+            </button>
+          )}
         </div>
       </div>
       
@@ -170,9 +278,9 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
         
         {activeTab === 'images' && (
           <div className="images-tab tab-content">
-            {validImages.length > 0 ? (
+            {filteredImages.length > 0 ? (
               <div className="image-grid">
-                {validImages.map((image, index) => (
+                {filteredImages.map((image, index) => (
                   <div key={index} className="image-card">
                     <div 
                       className="image-preview" 
@@ -203,7 +311,25 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
               <div className="empty-state">
                 <span className="material-icons">hide_image</span>
                 <h3>No images found</h3>
-                <p>We couldn't find any images on this website.</p>
+                <p>{search ? `No images matching "${search}"` : "We couldn't find any images on this website."}</p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {activeTab === 'videos' && (
+          <div className="videos-tab tab-content">
+            {filteredVideos.length > 0 ? (
+              <div className="video-grid">
+                {filteredVideos.map((video, index) => (
+                  <VideoCard key={index} src={video} />
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <span className="material-icons">videocam_off</span>
+                <h3>No videos found</h3>
+                <p>{search ? `No videos matching "${search}"` : "We couldn't find any videos on this website."}</p>
               </div>
             )}
           </div>
@@ -211,9 +337,9 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
         
         {activeTab === 'fonts' && (
           <div className="fonts-tab tab-content">
-            {fonts && fonts.length > 0 ? (
+            {filteredFonts && filteredFonts.length > 0 ? (
               <div className="font-grid">
-                {fonts.map((font, index) => (
+                {filteredFonts.map((font, index) => (
                   <FontCard key={index} font={font} />
                 ))}
               </div>
@@ -221,7 +347,7 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
               <div className="empty-state">
                 <span className="material-icons">format_clear</span>
                 <h3>No fonts found</h3>
-                <p>We couldn't find any fonts on this website.</p>
+                <p>{search ? `No fonts matching "${search}"` : "We couldn't find any fonts on this website."}</p>
               </div>
             )}
           </div>
