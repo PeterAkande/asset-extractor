@@ -319,21 +319,6 @@
   border-top: 1px solid var(--border-color);
 }
 
-/* .color-name {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
-  text-transform: capitalize;
-} */
-
-/* .color-rgb {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 4px 0;
-} */
-
 .color-usage {
   display: inline-block;
   margin-top: 8px;
@@ -468,28 +453,54 @@
   box-shadow: var(--shadow-lg);
 }
 
+/* Adjust image-preview for direct video embedding */
 .image-preview {
-  height: 300px;
+  height: 240px; /* Standard height for all cards */
   position: relative;
-  cursor: zoom-in;
+  cursor: pointer; 
+  background-color: #000; /* Black background for videos */
+  overflow: hidden;
 }
 
-.image-overlay {
+/* Styles for the video/iframe inside the card */
+.card-video-iframe,
+.card-video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Cover the area, might crop */
+  border: none;
+  pointer-events: none; /* Prevent interaction with the video on the card */
+}
+
+/* Ensure overlay is still visible on hover if kept */
+.image-preview .image-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.1); /* Lighter overlay */
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   transition: opacity 0.3s;
+  z-index: 1; /* Ensure overlay is above video */
 }
 
 .image-preview:hover .image-overlay {
   opacity: 1;
+  background: rgba(0, 0, 0, 0.4); /* Darker background on hover */
+}
+
+.video-preview-container .image-overlay {
+  background: rgba(0, 0, 0, 0.2); /* Slightly visible by default for videos */
+  opacity: 0.3; /* Slightly visible by default */
+}
+
+.video-preview-container:hover .image-overlay {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .preview-btn {
@@ -628,6 +639,7 @@
   gap: 16px;
   margin-top: 20px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .download-modal-btn, .view-original-btn {
@@ -664,52 +676,200 @@
   background: rgba(255, 255, 255, 0.25);
 }
 
-/* Empty state styling */
-.empty-state {
+/* Enhanced Video Card Styling */
+.video-card {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s;
+  background: white;
+  position: relative;
+}
+
+.video-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+}
+
+.video-preview {
+  height: 240px;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+  background: #000;
+}
+
+.thumbnail-container {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.5s ease;
+}
+
+.video-card:hover .thumbnail-container {
+  transform: scale(1.05);
+}
+
+/* Video type badge styling - position it on top of the image preview */
+.video-type-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.preview-iframe,
+.preview-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: none;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.video-preview:hover .video-overlay {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Make video cards clearly clickable */
+.video-card-clickable {
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.video-card-clickable:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+.video-card-clickable .preview-btn {
+  transform: scale(1.1); /* Make play button slightly larger */
+}
+
+/* Enhanced Video Modal Styles for full-screen view */
+.video-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95); /* Even darker overlay */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 0; /* Remove padding */
+  animation: fadeIn 0.3s;
+}
+
+.video-modal-content {
+  position: relative;
+  animation: zoomIn 0.3s;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-  color: var(--text-secondary);
+  justify-content: center; /* Center content vertically */
+  align-items: center; /* Center content horizontally */
+  background: none; /* Remove background */
+  padding: 0; /* Remove padding */
+  border-radius: 0; /* Remove border-radius */
+  backdrop-filter: none; /* Remove backdrop filter */
+  width: 100vw; /* Full viewport width */
+  height: 100vh; /* Full viewport height */
+  max-width: none; /* Remove max-width */
+  max-height: none; /* Remove max-height */
+  gap: 20px;
 }
 
-.empty-state .material-icons {
-  font-size: 64px;
-  margin-bottom: 20px;
-  opacity: 0.5;
+/* Remove wide-modal specific styles if they exist */
+.video-modal-content.wide-modal {
+  /* These are no longer needed */
 }
 
-.empty-state h3 {
-  margin: 0 0 12px;
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--text-color);
+.video-modal-player {
+  width: 95%; /* Use most of the width */
+  max-width: 1600px; /* Optional: Limit max width on very large screens */
+  border-radius: 0; /* No radius for full screen */
+  overflow: hidden;
+  background: #000;
+  box-shadow: none; /* No shadow needed */
+  position: relative;
 }
 
-.empty-state p {
-  max-width: 400px;
-  margin: 0 auto;
-  font-size: 16px;
+.modal-video-iframe,
+.modal-video-player {
+  width: 100%;
+  aspect-ratio: 16/9;
+  display: block;
+  border: none;
+  background: #000;
 }
 
-.no-data {
+/* Reposition close button for full screen */
+.close-modal-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  color: white;
+  font-size: 24px; /* Larger icon */
+  cursor: pointer;
+  padding: 10px; /* More padding */
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 64px 32px;
-  text-align: center;
-  color: var(--text-secondary);
-  background: var(--bg-light);
-  border-radius: 8px;
-  font-size: 16px;
+  transition: background 0.2s;
+  z-index: 1001; /* Ensure it's above the video */
 }
 
-.more-info {
-  text-align: center;
-  margin-top: 24px;
-  color: var(--text-secondary);
+.close-modal-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Adjust modal actions for full screen */
+.modal-actions {
+  position: absolute;
+  bottom: 20px; /* Position at the bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  background: rgba(0, 0, 0, 0.5); /* Add slight background for visibility */
+  padding: 10px 20px;
+  border-radius: 8px;
+  z-index: 1001;
+}
+
+/* Video Grid Responsive Styling */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
 }
 
 @media (max-width: 768px) {
@@ -740,6 +900,14 @@
   }
   
   .image-preview {
+    height: 200px; /* Adjust height for mobile if needed */
+  }
+  
+  .video-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .video-preview {
     height: 200px;
   }
   
@@ -764,6 +932,29 @@
   
   .asset-list {
     grid-template-columns: 1fr;
+  }
+
+  .video-modal-content.wide-modal {
+    max-width: 100%; /* Full width on mobile */
+    padding: 12px;
+  }
+
+  .close-modal-btn {
+    top: 15px;
+    right: 15px;
+    font-size: 20px;
+    padding: 8px;
+  }
+
+  .modal-actions {
+    bottom: 15px;
+    gap: 10px;
+    padding: 8px 15px;
+  }
+
+  .download-modal-btn, .view-original-btn {
+    padding: 10px 15px;
+    font-size: 14px;
   }
 }
 

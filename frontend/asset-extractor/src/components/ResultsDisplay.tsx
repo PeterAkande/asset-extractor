@@ -33,6 +33,72 @@ const ImageModal = ({ src, onClose }: { src: string; onClose: () => void }) => (
   </div>
 );
 
+// Video Modal Component
+const VideoModal = ({ src, onClose }: { src: string; onClose: () => void }) => {
+  const isEmbedded = src.includes('youtube.com') || src.includes('vimeo.com') || src.includes('dailymotion.com');
+  const filename = src.split('/').pop() || 'video.mp4';
+
+  const handleDownload = () => {
+    if (!isEmbedded) {
+      fetch(src)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          window.URL.revokeObjectURL(url);
+        })
+        .catch(err => console.error('Error downloading video:', err));
+    }
+  };
+
+  return (
+    <div className="video-modal-overlay" onClick={onClose}>
+      <div className="video-modal-content" onClick={e => e.stopPropagation()}>
+        <button className="close-modal-btn" onClick={onClose}>
+          <span className="material-icons">close</span>
+        </button>
+        
+        <div className="video-modal-player">
+          {isEmbedded ? (
+            <iframe
+              src={src}
+              allowFullScreen
+              title="Video preview"
+              className="modal-video-iframe"
+            ></iframe>
+          ) : (
+            <video 
+              src={src} 
+              controls 
+              autoPlay
+              className="modal-video-player"
+            ></video>
+          )}
+        </div>
+
+        <div className="modal-actions">
+          {!isEmbedded && (
+            <button 
+              onClick={handleDownload}
+              className="download-modal-btn"
+            >
+              <span className="material-icons">download</span>
+              Download Video
+            </button>
+          )}
+          <a href={src} target="_blank" rel="noopener noreferrer" className="view-original-btn">
+            <span className="material-icons">open_in_new</span>
+            View Original
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Color Card Component
 const ColorCard = ({ color }: { color: ColorInfo }) => {
   const [copied, setCopied] = useState(false);
@@ -97,12 +163,13 @@ const FontCard = ({ font }: { font: FontInfo }) => {
 };
 
 // Video Card Component
-const VideoCard = ({ src }: { src: string }) => {
-  const [showControls, setShowControls] = useState(false);
+const VideoCard = ({ src, onVideoClick }: { src: string; onVideoClick: (src: string) => void }) => {
   const isEmbedded = src.includes('youtube.com') || src.includes('vimeo.com') || src.includes('dailymotion.com');
   const filename = src.split('/').pop() || 'video.mp4';
   
-  const handleDownload = () => {
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click from opening modal
+    
     if (!isEmbedded) {
       fetch(src)
         .then(response => response.blob())
@@ -119,39 +186,57 @@ const VideoCard = ({ src }: { src: string }) => {
   };
   
   return (
-    <div className="video-card">
-      <div 
-        className="video-container"
-        onMouseEnter={() => setShowControls(true)}
-        onMouseLeave={() => setShowControls(false)}
-      >
+    <div 
+      className="image-card video-card-clickable" 
+      onClick={() => onVideoClick(src)}
+    >
+      <div className="image-preview video-preview-container">
         {isEmbedded ? (
           <iframe
-            src={src}
-            allowFullScreen
-            title="Embedded video"
+            src={`${src}${src.includes('?') ? '&' : '?'}autoplay=1&mute=1&loop=1&controls=0`}
+            title="Video preview"
+            allow="autoplay; encrypted-media;"
+            className="card-video-iframe"
+            scrolling="no"
           ></iframe>
         ) : (
           <video 
             src={src} 
-            controls={showControls}
-            poster={`${src}#t=0.1`}
-            preload="metadata"
+            autoPlay 
+            muted 
+            loop
+            playsInline
+            className="card-video-player"
           ></video>
         )}
-      </div>
-      <div className="video-actions">
-        <a href={src} target="_blank" rel="noopener noreferrer" className="view-video-btn">
-          <span className="material-icons">open_in_new</span>
-          View Original
-        </a>
-        {!isEmbedded && (
-          <button onClick={handleDownload} className="download-video-btn">
-            <span className="material-icons">download</span>
-            Download
+
+        <div className="video-type-badge">
+          {isEmbedded ? (
+            src.includes('youtube.com') ? 'YouTube' :
+            src.includes('vimeo.com') ? 'Vimeo' : 
+            'Embedded Video'
+          ) : (
+            filename.split('.').pop()?.toUpperCase() || 'Video'
+          )}
+        </div>
+        
+        <div className="image-overlay">
+          <button className="preview-btn">
+            <span className="material-icons">play_circle_outline</span>
           </button>
-        )}
+        </div>
       </div>
+      
+      <button 
+        className="download-image-btn"
+        onClick={!isEmbedded ? handleDownload : (e) => {
+          e.stopPropagation();
+          onVideoClick(src);
+        }}
+      >
+        <span className="material-icons">{!isEmbedded ? 'download' : 'play_arrow'}</span>
+        {!isEmbedded ? 'Download' : 'Play Video'}
+      </button>
     </div>
   );
 };
@@ -165,6 +250,7 @@ function isLightColor(rgb: number[]): boolean {
 const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
   const [activeTab, setActiveTab] = useState('colors');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   
   if (!results) {
@@ -240,21 +326,6 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
             <span className="tab-count">{fonts?.length || 0}</span>
           </button>
         </div>
-
-        {/* <div className="search-container">
-          <input
-            type="text"
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-          />
-          {search && (
-            <button className="clear-search" onClick={() => setSearch('')}>
-              <span className="material-icons">clear</span>
-            </button>
-          )}
-        </div> */}
       </div>
       
       <div className="results-content">
@@ -322,7 +393,11 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
             {filteredVideos.length > 0 ? (
               <div className="video-grid">
                 {filteredVideos.map((video, index) => (
-                  <VideoCard key={index} src={video} />
+                  <VideoCard 
+                    key={index} 
+                    src={video} 
+                    onVideoClick={(src) => setSelectedVideo(src)}
+                  />
                 ))}
               </div>
             ) : (
@@ -356,6 +431,10 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
       
       {selectedImage && (
         <ImageModal src={selectedImage} onClose={() => setSelectedImage(null)} />
+      )}
+      
+      {selectedVideo && (
+        <VideoModal src={selectedVideo} onClose={() => setSelectedVideo(null)} />
       )}
     </div>
   );
