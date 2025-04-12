@@ -17,6 +17,7 @@
   top: 0;
   z-index: 10;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  outline: none;
 }
 
 .tab-buttons {
@@ -27,6 +28,7 @@
   padding: 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   margin: 0 20px;
+  outline: none;
 }
 
 .tab-buttons::-webkit-scrollbar {
@@ -47,7 +49,7 @@
   );
 }
 
-/* Refined tab button */
+/* Refined tab button - Remove outlines */
 .tab-button {
   padding: 20px 16px;
   background: none;
@@ -67,6 +69,30 @@
   letter-spacing: 0.01em;
   opacity: 0.85;
   border-radius: 0;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove outline on focus */
+.tab-button:focus,
+.tab-button:focus-visible,
+.tab-button:focus-within,
+.tab-button.active:focus,
+.tab-button.active:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+/* Remove outline from the focus indicator */
+.tab-button:focus::before {
+  display: none;
+}
+
+.tab-button.active:focus,
+.tab-button.active:focus-visible {
+  outline: none !important;
+  box-shadow: none;
 }
 
 /* Enhanced hover effect */
@@ -89,6 +115,7 @@
   font-weight: 600;
   border-bottom-color: transparent; /* Remove default border */
   opacity: 1;
+  outline: none;
 }
 
 /* Elegant active tab indicator */
@@ -107,6 +134,19 @@
 
 .tab-button.active::after {
   width: 100%;
+}
+
+/* Use the after pseudo-element for focus indication instead of outline */
+.tab-button:focus::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border-radius: 4px;
+  background: rgba(66, 133, 244, 0.1);
+  z-index: -1;
 }
 
 /* Professional badge for tab count */
@@ -166,6 +206,7 @@
   padding: 40px;
   animation: fadeIn 0.5s ease;
   min-height: 50vh;
+  border: none;
 }
 
 /* Colors tab */
@@ -688,4 +729,9 @@
   .asset-list {
     grid-template-columns: 1fr;
   }
+}
+
+/* Force remove any outlines */
+*:focus {
+  outline: none !important;
 }
