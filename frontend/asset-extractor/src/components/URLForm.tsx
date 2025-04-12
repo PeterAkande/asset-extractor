@@ -1,18 +1,20 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { extractFromUrl, ExtractorResponse } from '../api/extractorApi';
+import { extractFromUrlWithProgress, ProgressEvent, ExtractorResponse } from '../api/extractorApi';
+import ExtractionProgress from './ExtractionProgress';
 import './URLForm.css';
 
 interface URLFormProps {
   setIsLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setResults: (results: ExtractorResponse | null) => void;
-  isLoading?: boolean; // Add isLoading prop
+  isLoading?: boolean;
 }
 
 const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLFormProps) => {
   const [url, setUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState<boolean | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [currentProgress, setCurrentProgress] = useState<ProgressEvent | null>(null);
   
   // Sample URLs for quick testing
   const sampleUrls = [
@@ -56,15 +58,24 @@ const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLF
     setIsLoading(true);
     setError(null);
     setResults(null);
+    setCurrentProgress(null);
 
-    try {
-      const result = await extractFromUrl(url);
-      setResults(result);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to extract assets');
-    } finally {
-      setIsLoading(false);
-    }
+    // Use SSE instead of direct API call
+    const cleanup = extractFromUrlWithProgress(url, (progressEvent) => {
+      console.log('Progress update:', progressEvent);
+      setCurrentProgress(progressEvent);
+      
+      if (progressEvent.event === 'complete') {
+        setResults(progressEvent.result || null);
+        setIsLoading(false);
+      } else if (progressEvent.event === 'error') {
+        setError(progressEvent.message || 'Failed to extract assets');
+        setIsLoading(false);
+      }
+    });
+    
+    // Store cleanup function for component unmount
+    return () => cleanup();
   };
 
   const useExampleUrl = (exampleUrl: string) => {
@@ -118,6 +129,10 @@ const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLF
             )}
           </button>
         </div>
+        
+        {isLoading && currentProgress && (
+          <ExtractionProgress currentProgress={currentProgress} />
+        )}
         
         <div className="sample-urls-section">
           <div className="sample-urls-header">

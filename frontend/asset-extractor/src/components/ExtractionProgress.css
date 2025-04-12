@@ -1,0 +1,113 @@
+.extraction-progress {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 24px;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+  margin: 32px 0;
+  border: 1px solid rgba(66, 133, 244, 0.15);
+  transition: all 0.3s ease;
+  animation: fadeIn 0.3s;
+}
+
+.extraction-progress h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.extraction-progress p {
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  font-size: 15px;
+}
+
+.progress-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(66, 133, 244, 0.1);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s cubic-bezier(0.76, 0.35, 0.2, 0.7) infinite;
+  margin: 0 auto 16px;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: var(--google-gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--google-blue), var(--google-green));
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.progress-percentage {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--google-blue);
+  margin-top: 8px;
+}
+
+.extraction-error {
+  background-color: rgba(234, 67, 53, 0.05);
+  border-left: 4px solid var(--google-red);
+  padding: 24px;
+  margin: 32px 0;
+  border-radius: var(--border-radius-sm);
+  text-align: center;
+  animation: fadeIn 0.3s;
+}
+
+.error-icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+.extraction-error h3 {
+  margin-top: 0;
+  color: var(--google-red);
+  margin-bottom: 8px;
+}
+
+.extraction-error p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.stage-detail {
+  background-color: var(--google-gray-100);
+  padding: 12px;
+  border-radius: var(--border-radius-sm);
+  margin-top: 16px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 14px;
+  text-align: left;
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .extraction-progress {
+    padding: 16px;
+    margin: 24px 0;
+  }
+}

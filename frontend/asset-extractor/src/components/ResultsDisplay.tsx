@@ -241,7 +241,7 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
           </button>
         </div>
 
-        <div className="search-container">
+        {/* <div className="search-container">
           <input
             type="text"
             placeholder="Search..."
@@ -254,7 +254,7 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
               <span className="material-icons">clear</span>
             </button>
           )}
-        </div>
+        </div> */}
       </div>
       
       <div className="results-content">
