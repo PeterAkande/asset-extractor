@@ -277,6 +277,7 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
+/* Enhanced color info section with better contrast */
 .color-info {
   padding: 20px;
   background-color: white;
@@ -286,17 +287,52 @@
 .color-name {
   margin: 0 0 8px 0;
   font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
+  font-weight: 500; /* Increased weight for better visibility */
+  color: #202124; /* Darker color for better contrast */
   text-transform: capitalize;
 }
 
 .color-rgb {
   font-family: 'Roboto Mono', monospace;
   font-size: 14px;
+  color: #5F6368; /* Darker secondary text color for better visibility */
+  margin: 4px 0;
+  font-weight: 500; /* Increased weight for better visibility */
+  letter-spacing: 0.3px; /* Slight spacing for monospace font */
+}
+
+.color-usage {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background-color: rgba(66, 133, 244, 0.15); /* Slightly darker background */
+  color: #1967D2; /* Darker blue for better contrast */
+  font-size: 13px;
+  font-weight: 600; /* Bolder text for better visibility */
+  border: 1px solid rgba(66, 133, 244, 0.2); /* Subtle border */
+}
+
+.color-info {
+  padding: 20px;
+  background-color: white;
+  border-top: 1px solid var(--border-color);
+}
+
+/* .color-name {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  text-transform: capitalize;
+} */
+
+/* .color-rgb {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 14px;
   color: var(--text-secondary);
   margin: 4px 0;
-}
+} */
 
 .color-usage {
   display: inline-block;
