@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ExtractorResponse, ColorInfo, FontInfo, downloadImage } from '../api/extractorApi';
 import './ResultsDisplay.css';
 
@@ -141,9 +141,49 @@ const ColorCard = ({ color }: { color: ColorInfo }) => {
 const FontCard = ({ font }: { font: FontInfo }) => {
   const isGoogleFont = font.type.toLowerCase().includes('google');
   
+  useEffect(() => {
+    if (isGoogleFont) {
+      const fontFamily = font.name.replace(/\s+/g, '+');
+      const link = document.createElement('link');
+      link.href = `https://fonts.googleapis.com/css2?family=${fontFamily}:wght@400;700&display=swap`;
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+      
+      return () => {
+        document.head.removeChild(link);
+      };
+    }
+  }, [font.name, isGoogleFont]);
+  
+  const fontStyle = {
+    fontFamily: `"${font.name}", system-ui, sans-serif`
+  };
+  
   return (
     <div className="font-card">
-      <h3 className="font-name" style={{ fontFamily: font.name }}>{font.name}</h3>
+      <h3 className="font-name" style={fontStyle}>{font.name}</h3>
+      
+      <div className="font-preview" style={fontStyle}>
+        <p className="font-sample-regular">
+          <span className="font-sample-label">Regular:</span>
+          <span className="font-sample-text">The quick brown fox jumps over the lazy dog</span>
+        </p>
+        <p className="font-sample-uppercase">
+          <span className="font-sample-label">Uppercase:</span>
+          <span className="font-sample-text">ABCDEFGHIJKLMNOPQRSTUVWXYZ</span>
+        </p>
+        <p className="font-sample-numbers">
+          <span className="font-sample-label">Numbers:</span>
+          <span className="font-sample-text">0123456789</span>
+        </p>
+        {isGoogleFont && (
+          <p className="font-sample-bold" style={{ fontWeight: 700 }}>
+            <span className="font-sample-label">Bold:</span>
+            <span className="font-sample-text">The quick brown fox jumps over the lazy dog</span>
+          </p>
+        )}
+      </div>
+      
       <div className="font-meta">
         <span className="font-type">{font.type}</span>
         {isGoogleFont && (
