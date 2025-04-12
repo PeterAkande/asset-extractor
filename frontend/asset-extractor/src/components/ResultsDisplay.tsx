@@ -115,7 +115,7 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
   const allColors = [...(colors.from_css || []), ...(colors.from_images || [])];
   const validImages = (assets.images || []).filter(img => 
     !img.startsWith('data:') && 
-    (img.endsWith('.jpg') || img.endsWith('.jpeg') || img.endsWith('.png') || img.endsWith('.gif') || img.endsWith('.webp'))
+    (img.endsWith('.jpg') || img.endsWith('.jpeg') || img.endsWith('.png') || img.endsWith('.gif') || img.endsWith('.webp') || img.endsWith('.svg'))
   );
   
   return (
