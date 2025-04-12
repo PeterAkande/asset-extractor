@@ -7,9 +7,21 @@ class ColorInfo(BaseModel):
     name: str = Field(..., description="The name of the color")
     hex: str = Field(..., description="The hexadecimal representation of the color")
     rgb: List[int] = Field(..., description="The RGB values of the color")
-    count: Optional[int] = Field(None, description="The pixel count of the color (for image colors)")
-    percentage: Optional[float] = Field(None, description="The percentage of the color in the image")
+    count: Optional[int] = Field(None, description="The frequency or pixel count of the color (used for sorting)")
+    percentage: Optional[float] = Field(None, description="The percentage of the color in the image (used for sorting)")
     source: Optional[str] = Field(None, description="The source URL of the image containing the color")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "steelblue",
+                "hex": "#4682b4",
+                "rgb": [70, 130, 180],
+                "count": 42,
+                "percentage": 15.7,
+                "source": "https://example.com/image.jpg"
+            }
+        }
 
 
 class FontInfo(BaseModel):

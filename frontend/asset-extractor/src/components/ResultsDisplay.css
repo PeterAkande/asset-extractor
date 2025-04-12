@@ -258,6 +258,52 @@
   font-weight: 600;
   letter-spacing: 1px;
   transition: all 0.3s;
+  position: relative; /* Make sure it's positioned relatively for absolute badge */
+}
+
+/* Add styles for color rank badge */
+.color-rank-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Color metrics display */
+.color-metrics {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.color-usage, .color-frequency {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.color-usage {
+  background-color: rgba(66, 133, 244, 0.15);
+  color: #1967D2;
+  border: 1px solid rgba(66, 133, 244, 0.2);
+}
+
+.color-frequency {
+  background-color: rgba(52, 168, 83, 0.15);
+  color: #0F9D58;
+  border: 1px solid rgba(52, 168, 83, 0.2);
 }
 
 .copied-indicator {

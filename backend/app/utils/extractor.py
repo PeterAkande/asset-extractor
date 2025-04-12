@@ -269,6 +269,9 @@ class WebAssetExtractor:
     async def extract_css_colors(self):
         """Extract colors from CSS files and inline styles"""
         self._send_progress("extracting_colors", {"stage": "css"})
+        # Dictionary to track color frequency
+        color_frequency = {}
+        
         # Get colors from style tags
         for style in self.soup.find_all('style'):
             if style.string:
@@ -280,8 +283,10 @@ class WebAssetExtractor:
                                 # Extract colors from the property value
                                 color_values = re.findall(r'#(?:[0-9a-fA-F]{3}){1,2}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)', property.value)
                                 for color in color_values:
-                                    if color not in self.css_colors:
-                                        self.css_colors.append(color)
+                                    if color in color_frequency:
+                                        color_frequency[color] += 1
+                                    else:
+                                        color_frequency[color] = 1
         
         # Get colors from computed styles (React and dynamically generated CSS)
         try:
@@ -315,45 +320,19 @@ class WebAssetExtractor:
                 }''')
                 
                 for color in colors_from_computed:
-                    if color not in self.css_colors:
-                        self.css_colors.append(color)
+                    if color in color_frequency:
+                        color_frequency[color] += 1
+                    else:
+                        color_frequency[color] = 1
                         
                 await browser.close()
         except Exception as e:
             traceback.print_exc()
-
             print(f"Error extracting computed styles: {str(e)}")
-        
-        # Get colors from external CSS files
-        stylesheets = self.assets['stylesheets']
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
-            for css_url in stylesheets:
-                try:
-                    if not css_url.startswith(('http://', 'https://', 'data:')):
-                        css_url = urljoin(self.base_url, css_url)
-                    
-                    if css_url.startswith('data:'):
-                        continue
-                        
-                    response = await client.get(css_url, headers=self.headers, timeout=10.0)
-                    if response.status_code == 200:
-                        css = cssutils.parseString(response.text)
-                        for rule in css:
-                            if hasattr(rule, 'style'):
-                                for property in rule.style:
-                                    if 'color' in property.name or 'background' in property.name:
-                                        color_values = re.findall(r'#(?:[0-9a-fA-F]{3}){1,2}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)', property.value)
-                                        for color in color_values:
-                                            if color not in self.css_colors:
-                                                self.css_colors.append(color)
-                except Exception as e:
-                    print(f"Error processing CSS file {css_url}: {str(e)}")
-                    traceback.print_exc()
-                    continue
         
         # Process the colors
         processed_colors = []
-        for color in self.css_colors:
+        for color, count in color_frequency.items():
             if color.startswith('#'):
                 # Convert hex to RGB
                 if len(color) == 4:  # Short form (#RGB)
@@ -365,6 +344,8 @@ class WebAssetExtractor:
                     g = int(color[3:5], 16)
                     b = int(color[5:7], 16)
                 color_info = self._get_closest_color_name((r, g, b))
+                color_info["count"] = count
+                color_info["percentage"] = None  # CSS colors don't have a meaningful percentage
                 processed_colors.append(color_info)
             elif color.startswith('rgb(') or color.startswith('rgba('):
                 # Extract RGB values
@@ -372,9 +353,11 @@ class WebAssetExtractor:
                 if len(rgb_values) == 3:
                     rgb = tuple(int(v) for v in rgb_values)
                     color_info = self._get_closest_color_name(rgb)
+                    color_info["count"] = count
+                    color_info["percentage"] = None
                     processed_colors.append(color_info)
         
-        # Remove duplicates
+        # Remove duplicates and sort by frequency (count)
         unique_colors = []
         seen_hex = set()
         for color in processed_colors:
@@ -382,7 +365,8 @@ class WebAssetExtractor:
                 seen_hex.add(color['hex'])
                 unique_colors.append(color)
         
-        self.css_colors = unique_colors
+        # Sort colors by count (frequency) in descending order
+        self.css_colors = sorted(unique_colors, key=lambda x: x["count"], reverse=True)
         self._send_progress("colors_extracted", {"count": len(self.css_colors), "source": "css"})
 
     async def extract_dominant_image_colors(self, max_images=5):
@@ -433,6 +417,8 @@ class WebAssetExtractor:
                     print(f"Error processing image {img_url}: {str(e)}")
                     continue
         
+        # Sort the image colors by percentage/count in descending order
+        self.image_colors = sorted(self.image_colors, key=lambda x: x["percentage"] if x["percentage"] is not None else 0, reverse=True)
         self._send_progress("colors_extracted", {"count": len(self.image_colors), "source": "images"})
 
     async def extract_fonts(self):

@@ -62,6 +62,49 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative; /* For positioning the rank badge */
+}
+
+/* Add rank badge styling */
+.color-rank {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Color metrics styling */
+.color-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.color-percentage, .color-count {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.color-percentage {
+  background-color: rgba(66, 133, 244, 0.15);
+  color: #1967D2;
+}
+
+.color-count {
+  background-color: rgba(52, 168, 83, 0.15);
+  color: #0F9D58;
 }
 
 .color-preview:hover {

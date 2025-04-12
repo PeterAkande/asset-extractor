@@ -16,6 +16,19 @@ const ColorSwatch = ({ color }: { color: ColorInfo }) => {
   };
 
   const textColor = isLightColor(color.rgb) ? '#000000' : '#FFFFFF';
+  
+  // Determine color rank
+  const getColorRankLabel = () => {
+    if (color.percentage && color.percentage > 30) return 'Primary';
+    if (color.percentage && color.percentage > 15) return 'Secondary';
+    if (color.percentage && color.percentage > 5) return 'Tertiary';
+    if (color.count && color.count > 20) return 'Primary';
+    if (color.count && color.count > 10) return 'Secondary';
+    if (color.count && color.count > 5) return 'Tertiary';
+    return '';
+  };
+  
+  const colorRank = getColorRankLabel();
 
   return (
     <div className="color-swatch">
@@ -28,13 +41,23 @@ const ColorSwatch = ({ color }: { color: ColorInfo }) => {
         onClick={() => copyToClipboard(color.hex)}
       >
         {copied ? 'Copied!' : color.hex}
+        
+        {/* Add rank badge if applicable */}
+        {colorRank && (
+          <span className="color-rank">{colorRank}</span>
+        )}
       </div>
       <div className="color-info">
         <h4>{color.name}</h4>
         <p>RGB: {color.rgb.join(', ')}</p>
-        {color.percentage !== undefined && (
-          <p>Usage: {color.percentage.toFixed(1)}%</p>
-        )}
+        <div className="color-metrics">
+          {color.percentage !== null && color.percentage !== undefined && (
+            <span className="color-percentage">Usage: {color.percentage.toFixed(1)}%</span>
+          )}
+          {color.count !== null && color.count !== undefined && (
+            <span className="color-count">Frequency: {color.count}</span>
+          )}
+        </div>
         {color.source && (
           <a 
             href={color.source} 

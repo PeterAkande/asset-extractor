@@ -111,6 +111,20 @@ const ColorCard = ({ color }: { color: ColorInfo }) => {
   
   const textColor = isLightColor(color.rgb) ? '#202124' : '#FFFFFF';
   
+  // Determine if this is a primary, secondary, or tertiary color based on its position
+  // We'll consider top 3 colors as primary, secondary, tertiary
+  const getColorRankLabel = () => {
+    if (color.percentage && color.percentage > 30) return 'Primary';
+    if (color.percentage && color.percentage > 15) return 'Secondary';
+    if (color.percentage && color.percentage > 5) return 'Tertiary';
+    if (color.count && color.count > 20) return 'Primary';
+    if (color.count && color.count > 10) return 'Secondary';
+    if (color.count && color.count > 5) return 'Tertiary';
+    return '';
+  };
+  
+  const colorRank = getColorRankLabel();
+  
   return (
     <div className="color-card" onClick={copyToClipboard}>
       <div 
@@ -125,13 +139,25 @@ const ColorCard = ({ color }: { color: ColorInfo }) => {
         ) : (
           color.hex
         )}
+        
+        {/* Show frequency label if there's a rank */}
+        {colorRank && (
+          <div className="color-rank-badge">
+            {colorRank}
+          </div>
+        )}
       </div>
       <div className="color-info">
         <h3 className="color-name">{color.name}</h3>
         <p className="color-rgb">RGB: {color.rgb.join(', ')}</p>
-        {color.percentage && (
-          <span className="color-usage">{color.percentage.toFixed(1)}%</span>
-        )}
+        <div className="color-metrics">
+          {color.percentage !== null && color.percentage !== undefined && (
+            <span className="color-usage">Usage: {color.percentage.toFixed(1)}%</span>
+          )}
+          {color.count !== null && color.count !== undefined && (
+            <span className="color-frequency">Frequency: {color.count}</span>
+          )}
+        </div>
       </div>
     </div>
   );
