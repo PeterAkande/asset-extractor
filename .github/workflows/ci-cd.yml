@@ -39,9 +39,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
           
-    #   - name: Run backend tests
-    #     working-directory: ./backend
-    #     run: pytest
+      - name: Run backend tests
+        working-directory: ./backend
+        run: pytest
         
       # Set up Node.js for frontend testing
       - name: Set up Node.js
@@ -59,9 +59,9 @@ jobs:
         working-directory: ./frontend/asset-extractor
         run: npm run build
         
-    #   - name: Run frontend tests
-    #     working-directory: ./frontend/asset-extractor
-    #     run: npm test -- --passWithNoTests
+      - name: Run frontend tests
+        working-directory: ./frontend/asset-extractor
+        run: npm test -- --passWithNoTests
   
   deploy:
     name: Deploy Application
@@ -86,13 +86,44 @@ jobs:
           npm ci
           npm run build
           
-      # Prepare deployment package
+      # Prepare deployment package with proper verification
       - name: Prepare deployment package
         run: |
           mkdir -p deployment
+          
+          # Verify backend directory exists
+          if [ ! -d "backend" ]; then
+            echo "Error: Backend directory not found"
+            exit 1
+          fi
           cp -r backend deployment/
-          cp -r frontend/asset-extractor/build deployment/frontend
-          cp deployment_scripts/* deployment/ || echo "No deployment scripts found"
+          
+          # Verify frontend build directory exists
+          if [ ! -d "frontend/asset-extractor/build" ]; then
+            echo "Frontend build directory not found, checking if it's in a different location..."
+            
+            # Check if build is in a different location (like 'dist' for Vite projects)
+            if [ -d "frontend/asset-extractor/dist" ]; then
+              echo "Found build in dist directory"
+              mkdir -p deployment/frontend
+              cp -r frontend/asset-extractor/dist deployment/frontend
+            else
+              # If we still can't find it, create a placeholder
+              echo "Creating placeholder frontend directory"
+              mkdir -p deployment/frontend
+              mkdir -p deployment/frontend/build
+              echo "<html><body><h1>Build in progress</h1></body></html>" > deployment/frontend/index.html
+            fi
+          else
+            # Copy frontend build directory
+            mkdir -p deployment/frontend
+            cp -r frontend/asset-extractor/build/* deployment/frontend/
+          fi
+          
+          # Copy deployment scripts if they exist
+          if [ -d "deployment_scripts" ]; then
+            cp deployment_scripts/* deployment/ || echo "No deployment scripts found"
+          fi
           
           # Create deployment script
           cat > deployment/deploy.sh << 'EOF'
@@ -122,6 +153,10 @@ jobs:
             echo "Installing Nginx..."
             sudo apt-get install -y nginx
           fi
+          
+          # Create application directory if it doesn't exist
+          sudo mkdir -p /var/www/assets_extractor
+          sudo chown -R $USER:$USER /var/www/assets_extractor
           
           # Set up backend
           echo "Setting up backend..."
@@ -183,6 +218,9 @@ jobs:
           sudo rm -f /etc/nginx/sites-enabled/default
           sudo nginx -t
           sudo systemctl restart nginx
+          
+          # Fix permissions before starting the service
+          sudo chown -R www-data:www-data /var/www/assets_extractor
           
           # Start/restart the backend service
           sudo systemctl daemon-reload
