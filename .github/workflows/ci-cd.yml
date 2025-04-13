@@ -175,15 +175,19 @@ jobs:
           pip install -r requirements.txt
           pip install gunicorn
 
-          # Install Playwright dependencies with system-wide access
-          sudo playwright install-deps 
+          # Install Playwright CLI and dependencies
+          pip install playwright
+          playwright install-deps
+          playwright install chromium
           
           # Create browser directory with proper permissions
           sudo mkdir -p /usr/local/share/playwright
           sudo chown -R www-data:www-data /usr/local/share/playwright
+          sudo chown -R www-data:www-data /var/www/assets_extractor/backend/venv
           
-          # Install Playwright browsers with correct permissions
-          sudo -u www-data playwright install chromium
+          # Copy Playwright to www-data's path
+          sudo cp /var/www/assets_extractor/backend/venv/bin/playwright /usr/local/bin/
+          sudo chmod +x /usr/local/bin/
           
           # Set proper permissions for the application
           sudo chown -R www-data:www-data /var/www/assets_extractor
