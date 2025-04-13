@@ -15,6 +15,23 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+# Add a simple index route for the /api endpoint
+@router.get("/", summary="API Information")
+async def api_index():
+    """
+    Returns information about the API endpoints.
+    This serves as a simple health check and documentation entry point.
+    """
+    return {
+        "status": "ok",
+        "version": "1.0",
+        "endpoints": {
+            "extract": "/api/extract",
+            "stream": "/api/extract-sse",
+        },
+        "documentation": "/docs",
+    }
+
 
 class URLRequest(BaseModel):
     url: str

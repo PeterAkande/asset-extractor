@@ -48,13 +48,11 @@ export interface ProgressEvent {
 
 export type ProgressCallback = (progressEvent: ProgressEvent) => void;
 
-const API_URL = 'http://localhost:8000';
-
 export async function extractFromUrl(url: string): Promise<ExtractorResponse> {
   try {
     console.log('Sending request to extract assets from:', url);
     
-    const response = await fetch(`${API_URL}/api/extract`, {
+    const response = await fetch(`/api/extract`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -79,7 +77,7 @@ export async function extractFromUrl(url: string): Promise<ExtractorResponse> {
 }
 
 export function extractFromUrlWithProgress(url: string, onProgress: ProgressCallback): () => void {
-  const eventSource = new EventSource(`${API_URL}/api/extract-sse?url=${encodeURIComponent(url)}`);
+  const eventSource = new EventSource(`/api/extract-sse?url=${encodeURIComponent(url)}`);
   
   eventSource.onmessage = (event) => {
     try {
