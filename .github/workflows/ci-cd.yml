@@ -178,7 +178,7 @@ jobs:
           # Install Playwright CLI and dependencies
           pip install playwright
           playwright install-deps
-          playwright install chromium
+          playwright install
           
           # Create browser directory with proper permissions
           sudo mkdir -p /usr/local/share/playwright
