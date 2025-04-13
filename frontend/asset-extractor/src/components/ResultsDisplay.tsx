@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ExtractorResponse, ColorInfo, FontInfo, downloadImage } from '../api/extractorApi';
-import SvgRenderer from './SvgRenderer';
+import SvgRenderer from './SVGRenderer';
 import './ResultsDisplay.css';
 
 interface ResultsDisplayProps {
