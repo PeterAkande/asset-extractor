@@ -36,6 +36,8 @@ class AssetCollection(BaseModel):
     videos: List[str] = Field(default_factory=list, description="URLs of videos found on the page")
     scripts: List[str] = Field(default_factory=list, description="URLs of JavaScript files found on the page")
     stylesheets: List[str] = Field(default_factory=list, description="URLs of CSS files found on the page")
+    icons: List[str] = Field(default_factory=list, description="SVG icons found on the page (typically smaller vector graphics)")
+    svgs: List[str] = Field(default_factory=list, description="Regular SVG images found on the page (typically larger vector graphics)")
 
 
 class ColorCollection(BaseModel):

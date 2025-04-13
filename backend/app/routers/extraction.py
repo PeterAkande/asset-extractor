@@ -15,41 +15,46 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+
 class URLRequest(BaseModel):
     url: str
-    
-    class Config:
-        schema_extra = {
-            "example": {
-                "url": "https://example.com"
-            }
-        }
 
-@router.post("/extract", response_model=ExtractorResponse, responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}})
+    class Config:
+        schema_extra = {"example": {"url": "https://example.com"}}
+
+
+@router.post(
+    "/extract",
+    response_model=ExtractorResponse,
+    responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
+)
 async def extract_assets(request: URLRequest):
     """
     Extract colors, fonts and assets from a web URL.
-    
+
     Returns:
         ExtractorResponse: A structured response containing colors, fonts, and assets from the web page
-    
+
     Raises:
         HTTPException: If the URL is invalid or if there's an error during extraction
     """
     # Validate URL
     if not validators.url(request.url):
         raise HTTPException(status_code=400, detail="Invalid URL format")
-    
+
     try:
         # Extract assets, colors and fonts
         result = await extract_from_url(request.url)
-        
+
+        print(f"Extraction result: {result}")
+
         if "error" in result:
             raise HTTPException(status_code=400, detail=result["error"])
-            
+
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
 
 @router.get("/extract-sse")
 async def extract_assets_sse(request: Request):
@@ -60,47 +65,44 @@ async def extract_assets_sse(request: Request):
     if not url:
         return StreamingResponse(
             content=stream_error_message("Missing URL parameter"),
-            media_type="text/event-stream"
+            media_type="text/event-stream",
         )
-    
+
     if not validators.url(url):
         return StreamingResponse(
             content=stream_error_message("Invalid URL format"),
-            media_type="text/event-stream"
+            media_type="text/event-stream",
         )
-    
+
     return StreamingResponse(
-        content=stream_extraction(url),
-        media_type="text/event-stream"
+        content=stream_extraction(url), media_type="text/event-stream"
     )
+
 
 async def stream_error_message(message):
     """Stream a single error message"""
     yield f"data: {json.dumps({'event': 'error', 'message': message})}\n\n"
+
 
 async def stream_extraction(url):
     """Stream extraction progress and results"""
     queue = asyncio.Queue()
     extraction_task = None
     extraction_result = None
-    
+
     # Callback function to handle progress updates
     def progress_callback(stage, data):
-        queue.put_nowait({
-            "event": "progress", 
-            "stage": stage,
-            "data": data
-        })
-    
+        queue.put_nowait({"event": "progress", "stage": stage, "data": data})
+
     try:
         # Send initial message
         yield f"data: {json.dumps({'event': 'start', 'url': url})}\n\n"
-        
+
         # Start extraction in background task
         extraction_task = asyncio.create_task(
             stream_extraction_from_url(url, progress_callback)
         )
-        
+
         # Stream progress updates
         while True:
             # Check if extraction is complete
@@ -109,52 +111,84 @@ async def stream_extraction(url):
                     # Get the final result
                     try:
                         extraction_result = extraction_task.result()
-                        
+
                         # Validate the result to prevent NoneType errors
                         if not extraction_result:
-                            queue.put_nowait({
-                                "event": "error",
-                                "message": "Extraction returned no result"
-                            })
+                            queue.put_nowait(
+                                {
+                                    "event": "error",
+                                    "message": "Extraction returned no result",
+                                }
+                            )
                         elif "error" in extraction_result:
-                            queue.put_nowait({
-                                "event": "error",
-                                "message": extraction_result["error"]
-                            })
+                            queue.put_nowait(
+                                {
+                                    "event": "error",
+                                    "message": extraction_result["error"],
+                                }
+                            )
                         else:
                             # Ensure the result has the expected structure
                             safe_result = {
                                 "url": url,
                                 "colors": {
-                                    "from_css": extraction_result.get("colors", {}).get("from_css", []),
-                                    "from_images": extraction_result.get("colors", {}).get("from_images", [])
+                                    "from_css": extraction_result.get("colors", {}).get(
+                                        "from_css", []
+                                    ),
+                                    "from_images": extraction_result.get(
+                                        "colors", {}
+                                    ).get("from_images", []),
                                 },
                                 "fonts": extraction_result.get("fonts", []),
                                 "assets": {
-                                    "images": extraction_result.get("assets", {}).get("images", []),
-                                    "videos": extraction_result.get("assets", {}).get("videos", []),
-                                    "scripts": extraction_result.get("assets", {}).get("scripts", []),
-                                    "stylesheets": extraction_result.get("assets", {}).get("stylesheets", [])
-                                }
+                                    "images": extraction_result.get("assets", {}).get(
+                                        "images", []
+                                    ),
+                                    "videos": extraction_result.get("assets", {}).get(
+                                        "videos", []
+                                    ),
+                                    "scripts": extraction_result.get("assets", {}).get(
+                                        "scripts", []
+                                    ),
+                                    "stylesheets": extraction_result.get(
+                                        "assets", {}
+                                    ).get("stylesheets", []),
+                                    "icons": extraction_result.get("assets", {}).get(
+                                        "icons", []
+                                    ),
+                                    "audios": extraction_result.get("assets", {}).get(
+                                        "audios", []
+                                    ),
+                                    "fonts": extraction_result.get("assets", {}).get(
+                                        "fonts", []
+                                    ),
+                                    "others": extraction_result.get("assets", {}).get(
+                                        "others", []
+                                    ),
+                                },
                             }
-                            queue.put_nowait({
-                                "event": "complete",
-                                "result": safe_result
-                            })
+                            queue.put_nowait(
+                                {"event": "complete", "result": safe_result}
+                            )
                     except Exception as e:
                         traceback.print_exc()
-                        queue.put_nowait({
-                            "event": "error",
-                            "message": f"Extraction failed: {str(e)}"
-                        })
-            
+                        queue.put_nowait(
+                            {
+                                "event": "error",
+                                "message": f"Extraction failed: {str(e)}",
+                            }
+                        )
+
             # Get message from queue with timeout
             try:
                 message = await asyncio.wait_for(queue.get(), timeout=0.5)
                 yield f"data: {json.dumps(message)}\n\n"
-                
+
                 # Exit the loop if we've sent the complete result
-                if message.get("event") in ["complete", "error"] and extraction_task.done():
+                if (
+                    message.get("event") in ["complete", "error"]
+                    and extraction_task.done()
+                ):
                     break
             except asyncio.TimeoutError:
                 # No message in queue, but extraction might be complete
@@ -162,7 +196,7 @@ async def stream_extraction(url):
                     break
                 # Send a keepalive comment to prevent timeout
                 yield ": keepalive\n\n"
-    
+
     except asyncio.CancelledError:
         if extraction_task and not extraction_task.done():
             extraction_task.cancel()

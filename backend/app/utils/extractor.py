@@ -15,6 +15,7 @@ import asyncio
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 import base64
 from typing import Optional, Callable, Dict, Any
+import html
 
 # Suppress cssutils log messages
 cssutils.log.setLevel(logging.CRITICAL)
@@ -36,7 +37,9 @@ class WebAssetExtractor:
             'images': [],
             'videos': [],
             'scripts': [],
-            'stylesheets': []
+            'stylesheets': [],
+            'icons': [],  # For SVG icons
+            'svgs': []    # For regular SVGs
         }
         self.page_resources = []
         self.progress_callback = progress_callback
@@ -266,6 +269,183 @@ class WebAssetExtractor:
             hex_color = "#{:02x}{:02x}{:02x}".format(rgb[0], rgb[1], rgb[2])
             return {"name": closest_name, "hex": hex_color, "rgb": rgb}
 
+    def _clean_svg(self, svg_str: str) -> str:
+        """Clean and format SVG content for better compatibility"""
+        # Remove unnecessary whitespace and formatting
+        svg_str = re.sub(r'\s+', ' ', svg_str)
+        svg_str = re.sub(r'> <', '><', svg_str)
+        
+        # Fix case sensitivity issues - convert viewbox to viewBox
+        svg_str = re.sub(r'\bviewbox\s*=', 'viewBox=', svg_str)
+        
+        # Find all viewBox attributes and their values
+        viewbox_matches = re.findall(r'viewBox\s*=\s*["\']([^"\']+)["\']', svg_str)
+        
+        # If multiple viewBox attributes or invalid ones, fix them
+        if viewbox_matches:
+            # Remove all viewBox attributes
+            svg_str = re.sub(r'viewBox\s*=\s*["\'][^"\']+["\']', '', svg_str)
+            
+            # Find the first valid viewBox (non-zero width and height)
+            valid_viewbox = None
+            for viewbox in viewbox_matches:
+                parts = viewbox.split()
+                if len(parts) == 4:
+                    try:
+                        x, y, width, height = [float(p) for p in parts]
+                        # Check for valid dimensions (non-zero)
+                        if width > 0 and height > 0:
+                            valid_viewbox = viewbox
+                            break
+                    except (ValueError, IndexError):
+                        continue
+            
+            # If no valid viewBox found, try to create one from width/height
+            if not valid_viewbox:
+                width_match = re.search(r'width\s*=\s*["\'](\d+(?:\.\d+)?)', svg_str)
+                height_match = re.search(r'height\s*=\s*["\'](\d+(?:\.\d+)?)', svg_str)
+                
+                if width_match and height_match:
+                    width = width_match.group(1)
+                    height = height_match.group(1)
+                    valid_viewbox = f"0 0 {width} {height}"
+                else:
+                    # Default viewBox for small icons
+                    valid_viewbox = "0 0 24 24"
+            
+            # Add the valid viewBox back to the SVG
+            svg_str = svg_str.replace('<svg ', f'<svg viewBox="{valid_viewbox}" ')
+        else:
+            # No viewBox found, add one based on width/height or default
+            width_match = re.search(r'width\s*=\s*["\'](\d+(?:\.\d+)?)', svg_str)
+            height_match = re.search(r'height\s*=\s*["\'](\d+(?:\.\d+)?)', svg_str)
+            
+            if width_match and height_match:
+                width = width_match.group(1)
+                height = height_match.group(1)
+                svg_str = svg_str.replace('<svg ', f'<svg viewBox="0 0 {width} {height}" ')
+            else:
+                # Add default viewBox and dimensions
+                svg_str = svg_str.replace('<svg ', '<svg viewBox="0 0 24 24" ')
+        
+        # Ensure SVG has proper namespace
+        if not 'xmlns=' in svg_str:
+            svg_str = svg_str.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ')
+        
+        # Add default width/height if missing
+        if not 'width=' in svg_str:
+            width = re.search(r'viewBox\s*=\s*["\'][^"\']*\s+[^"\']*\s+([^"\']+)', svg_str)
+            if width:
+                svg_str = svg_str.replace('<svg ', f'<svg width="{width.group(1)}" ')
+            else:
+                svg_str = svg_str.replace('<svg ', '<svg width="24" ')
+        
+        if not 'height=' in svg_str:
+            height = re.search(r'viewBox\s*=\s*["\'][^"\']*\s+[^"\']*\s+[^"\']+\s+([^"\']+)', svg_str)
+            if height:
+                svg_str = svg_str.replace('<svg ', f'<svg height="{height.group(1)}" ')
+            else:
+                svg_str = svg_str.replace('<svg ', '<svg height="24" ')
+                
+        # Fix issue with SVG containing HTML entities
+        svg_str = svg_str.replace('&nbsp;', ' ')
+        svg_str = re.sub(r'&([a-zA-Z]+);', lambda m: html.unescape(f'&{m.group(1)};'), svg_str)
+        
+        return svg_str
+
+    def _svg_to_data_uri(self, svg_str: str) -> str:
+        """Convert SVG string to a data URI with improved encoding and path handling"""
+        try:
+            # Clean the SVG first
+            svg_str = self._clean_svg(svg_str)
+            
+            # Add default attributes if missing to improve compatibility
+            if not 'width' in svg_str and not 'height' in svg_str:
+                svg_str = svg_str.replace('<svg', '<svg width="24" height="24"')
+            
+            # Make sure paths have proper attributes
+            svg_str = self._fix_svg_paths(svg_str)
+            
+            # Base64 encoding - better compatibility for all browsers
+            encoded_svg = base64.b64encode(svg_str.encode('utf-8')).decode('utf-8')
+            return f"data:image/svg+xml;base64,{encoded_svg}"
+        except Exception as e:
+            print(f"Error converting SVG to data URI: {e}")
+            return ""
+
+    def _fix_svg_paths(self, svg_str: str) -> str:
+        """Ensure SVG paths have necessary attributes for proper rendering"""
+        # Find paths without fill or stroke
+        path_regex = r'<path([^>]*)>'
+        paths = re.findall(path_regex, svg_str)
+        
+        for path_attrs in paths:
+            if 'fill' not in path_attrs and 'stroke' not in path_attrs:
+                # Add default fill to ensure path is visible
+                new_path_attrs = path_attrs + ' fill="currentColor"'
+                svg_str = svg_str.replace(f'<path{path_attrs}>', f'<path{new_path_attrs}>')
+        
+        # Also fix rect, circle, and polygon elements without fill
+        for tag in ['rect', 'circle', 'ellipse', 'polygon', 'polyline']:
+            tag_regex = f'<{tag}([^>]*)>'
+            elements = re.findall(tag_regex, svg_str)
+            
+            for elem_attrs in elements:
+                if 'fill' not in elem_attrs and 'stroke' not in elem_attrs:
+                    new_attrs = elem_attrs + ' fill="currentColor"'
+                    svg_str = svg_str.replace(f'<{tag}{elem_attrs}>', f'<{tag}{new_attrs}>')
+        
+        return svg_str
+
+    def _is_svg_icon(self, svg_str: str) -> bool:
+        """Determine if an SVG is likely an icon based on its attributes and content"""
+        # Check for common icon indicators in the SVG string
+        icon_indicators = ['icon', 'logo', 'glyph', 'symbol', 'button', 'arrow', 'menu']
+        if any(indicator in svg_str.lower() for indicator in icon_indicators):
+            return True
+            
+        # Check if it has a small viewBox or width/height
+        viewbox_match = re.search(r'viewBox=["\']0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)["\']', svg_str)
+        if viewbox_match:
+            width = float(viewbox_match.group(1))
+            height = float(viewbox_match.group(2))
+            # If smaller than 100x100, likely an icon
+            if width <= 100 and height <= 100:
+                return True
+                
+        # Check explicit width/height attributes
+        width_match = re.search(r'width=["\'](\d+(?:\.\d+)?)', svg_str)
+        height_match = re.search(r'height=["\'](\d+(?:\.\d+)?)', svg_str)
+        if width_match and height_match:
+            width = float(width_match.group(1))
+            height = float(height_match.group(1))
+            # If smaller than 100x100, likely an icon
+            if width <= 100 and height <= 100:
+                return True
+                
+        # Check if it has a single path and simple structure (common for icons)
+        path_count = svg_str.count('<path')
+        if path_count > 0 and path_count < 10 and svg_str.count('<') < 30:
+            return True
+            
+        # Check for specific attributes commonly used in icons
+        if 'stroke-width=' in svg_str and 'fill="none"' in svg_str:
+            return True
+            
+        return False
+
+    def _prepare_svg_for_frontend(self, svg_str: str) -> str:
+        """Prepare SVG content for frontend display (without base64 encoding)"""
+        try:
+            # Clean and fix paths in the SVG
+            svg_str = self._clean_svg(svg_str)
+            svg_str = self._fix_svg_paths(svg_str)
+            
+            return svg_str
+        except Exception as e:
+            print(f"Error preparing SVG for frontend: {e}")
+            return ""
+
     async def extract_css_colors(self):
         """Extract colors from CSS files and inline styles"""
         self._send_progress("extracting_colors", {"stage": "css"})
@@ -479,7 +659,7 @@ class WebAssetExtractor:
                 browser = await p.chromium.launch(headless=True)
                 context = await browser.new_context(viewport={'width': 1280, 'height': 800})
                 page = await context.new_page()
-                await page.goto(self.url, wait_until='networkidle', timeout=100000)
+                await page.goto(self.url, wait_until='networkidle')
                 
                 # Get computed font families from all elements
                 fonts_from_computed = await page.evaluate('''() => {
@@ -621,6 +801,94 @@ class WebAssetExtractor:
                 if data_uri not in self.assets['images']:
                     self.assets['images'].append(data_uri)
         
+        # Extract inline SVG elements more thoroughly
+        svg_elements = self.soup.find_all('svg')
+        for svg in svg_elements:
+            try:
+                svg_str = str(svg)
+                if svg_str:
+                    # Debug info
+                    print(f"Processing SVG: {svg_str[:100]}...")
+                    
+                    # Clean and prepare the SVG for frontend
+                    processed_svg = self._prepare_svg_for_frontend(svg_str)
+                    if not processed_svg:
+                        continue
+                    
+                    # Determine if it's an icon or regular SVG
+                    is_icon = self._is_svg_icon(svg_str)
+                    
+                    if is_icon:
+                        print(f"Identified as icon: {processed_svg[:50]}...")
+                        if processed_svg not in self.assets['icons']:
+                            self.assets['icons'].append(processed_svg)
+                    else:
+                        print(f"Identified as regular SVG: {processed_svg[:50]}...")
+                        if processed_svg not in self.assets['svgs']:
+                            self.assets['svgs'].append(processed_svg)
+            except Exception as e:
+                print(f"Error processing inline SVG: {str(e)}")
+        
+        # Also check for SVG content in HTML attributes like aria-label, title, etc.
+        for elem in self.soup.find_all(attrs={"aria-label": True}):
+            aria_label = elem.get("aria-label", "")
+            if aria_label.lower() in ["icon", "logo", "svg icon"]:
+                if elem.name == "div" and elem.get("class"):
+                    # This might be an SVG icon wrapped in a div
+                    try:
+                        # Try to get innerHTML
+                        inner_html = str(elem)
+                        if "<svg" in inner_html:
+                            svg_match = re.search(r'(<svg[^>]*>.*?</svg>)', inner_html, re.DOTALL)
+                            if svg_match:
+                                svg_str = svg_match.group(1)
+                                processed_svg = self._prepare_svg_for_frontend(svg_str)
+                                if processed_svg and processed_svg not in self.assets['icons']:
+                                    self.assets['icons'].append(processed_svg)
+                    except Exception as e:
+                        print(f"Error processing potential SVG in div: {str(e)}")
+        
+        # Look for SVG references in <img> and <object> tags
+        for tag in self.soup.find_all(['img', 'object']):
+            src = tag.get('src') or tag.get('data')
+            if src and src.endswith('.svg'):
+                try:
+                    svg_url = self._normalize_url(src)
+                    if svg_url:
+                        # For now, add to SVGs list - we'll process it later
+                        if svg_url not in self.assets['svgs']:
+                            self.assets['svgs'].append(svg_url)
+                except Exception as e:
+                    print(f"Error processing SVG reference: {str(e)}")
+        
+        # Process external SVG references
+        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+            for svg_url in list(self.assets['svgs']):  # Create a copy to avoid modification during iteration
+                if svg_url.startswith('<svg'):
+                    continue  # Skip SVG markup that's already processed
+                    
+                try:
+                    if svg_url.endswith('.svg'):
+                        response = await client.get(svg_url, headers=self.headers, timeout=10.0)
+                        if response.status_code == 200:
+                            svg_content = response.text
+                            # Remove the URL and add the processed SVG
+                            self.assets['svgs'].remove(svg_url)
+                            
+                            # Process SVG content
+                            processed_svg = self._prepare_svg_for_frontend(svg_content)
+                            
+                            # Determine if it's an icon or regular SVG
+                            is_icon = self._is_svg_icon(svg_content)
+                            if is_icon:
+                                if processed_svg not in self.assets['icons']:
+                                    self.assets['icons'].append(processed_svg)
+                            else:
+                                if processed_svg not in self.assets['svgs']:
+                                    self.assets['svgs'].append(processed_svg)
+                except Exception as e:
+                    print(f"Error fetching external SVG {svg_url}: {str(e)}")
+        
         # Extract video sources - standard video tags
         for video in self.soup.find_all('video'):
             # Check video src attribute
@@ -723,7 +991,9 @@ class WebAssetExtractor:
             "images": len(self.assets['images']),
             "videos": len(self.assets['videos']),
             "scripts": len(self.assets['scripts']),
-            "stylesheets": len(self.assets['stylesheets'])
+            "stylesheets": len(self.assets['stylesheets']),
+            "icons": len(self.assets['icons']),
+            "svgs": len(self.assets['svgs'])
         })
 
     async def extract_all(self):

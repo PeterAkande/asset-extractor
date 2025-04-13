@@ -17,6 +17,8 @@ export interface AssetCollection {
   videos: string[];
   scripts: string[];
   stylesheets: string[];
+  icons: string[]; // SVG icons
+  svgs: string[]; // Regular SVGs
 }
 
 export interface ColorCollection {
@@ -124,3 +126,131 @@ export function downloadImage(imageUrl: string, fileName: string) {
       document.body.removeChild(link);
     });
 }
+
+// Add a utility function to handle SVG data
+export const processSvgDataUri = (dataUri: string): string => {
+  // Ensure SVG data is properly formatted
+  if (dataUri.startsWith('data:image/svg+xml;base64,')) {
+    // Already properly formatted
+    return dataUri;
+  }
+  
+  // Try to extract the SVG content and reformat it
+  try {
+    // If it's raw SVG content
+    if (dataUri.trim().startsWith('<svg')) {
+      const base64Content = btoa(dataUri);
+      return `data:image/svg+xml;base64,${base64Content}`;
+    }
+    
+    // If it's a URL-encoded SVG
+    if (dataUri.startsWith('data:image/svg+xml,')) {
+      const svgContent = decodeURIComponent(dataUri.substring(18));
+      const base64Content = btoa(svgContent);
+      return `data:image/svg+xml;base64,${base64Content}`;
+    }
+  } catch (error) {
+    console.error('Failed to process SVG data:', error);
+  }
+  
+  // Return original if we can't process it
+  return dataUri;
+};
+
+/**
+ * Normalizes and optimizes SVG content for better display
+ */
+export const optimizeSvgContent = (svgContent: string): string => {
+  try {
+    // Add namespace if missing
+    if (!svgContent.includes('xmlns=')) {
+      svgContent = svgContent.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    
+    // Add viewBox if missing but has width/height
+    if (!svgContent.includes('viewBox=')) {
+      const widthMatch = svgContent.match(/width=["'](\d+(?:\.\d+)?)["']/);
+      const heightMatch = svgContent.match(/height=["'](\d+(?:\.\d+)?)["']/);
+      
+      if (widthMatch && heightMatch) {
+        const width = widthMatch[1];
+        const height = heightMatch[1];
+        svgContent = svgContent.replace('<svg', `<svg viewBox="0 0 ${width} ${height}"`);
+      }
+    }
+    
+    // Set color for paths that don't have fill or stroke
+    svgContent = svgContent.replace(/<path(?![^>]*?(?:fill|stroke))[^>]*>/gi, 
+                                   '<path fill="currentColor" $&');
+    
+    return svgContent;
+  } catch (error) {
+    console.error('Error optimizing SVG:', error);
+    return svgContent; // Return original if optimization fails
+  }
+};
+
+/**
+ * Helper to safely download SVG content
+ */
+export const downloadSvg = (svgDataUri: string, filename: string = 'icon.svg'): void => {
+  try {
+    let svgContent: string;
+    
+    // Decode the data URI
+    if (svgDataUri.startsWith('data:image/svg+xml;base64,')) {
+      svgContent = atob(svgDataUri.split('base64,')[1]);
+    } else if (svgDataUri.startsWith('data:image/svg+xml,')) {
+      svgContent = decodeURIComponent(svgDataUri.split('data:image/svg+xml,')[1]);
+    } else if (svgDataUri.startsWith('<svg')) {
+      svgContent = svgDataUri;
+    } else {
+      console.error('Invalid SVG data URI format');
+      return;
+    }
+    
+    // Optimize the SVG content
+    const optimizedSvg = optimizeSvgContent(svgContent);
+    
+    // Create a Blob with the SVG content
+    const blob = new Blob([optimizedSvg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a download link
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error downloading SVG:', error);
+  }
+};
+
+// /**
+//  * Downloads an SVG as a file
+//  */
+// export const downloadSvg = (svgContent: string, filename: string = 'icon.svg'): void => {
+//   try {
+//     // Create a blob from the SVG content
+//     const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+//     const url = URL.createObjectURL(blob);
+    
+//     // Create a link element and trigger download
+//     const a = document.createElement('a');
+//     a.href = url;
+//     a.download = filename;
+//     document.body.appendChild(a);
+//     a.click();
+    
+//     // Clean up
+//     document.body.removeChild(a);
+//     URL.revokeObjectURL(url);
+//   } catch (error) {
+//     console.error('Error downloading SVG:', error);
+//   }
+// };
