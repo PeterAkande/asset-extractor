@@ -175,14 +175,28 @@ jobs:
           pip install -r requirements.txt
           pip install gunicorn
 
-          # Install Playwright CLI and dependencies
+          # Install Playwright CLI and dependencies with specific browser path
           pip install playwright
-          playwright install-deps
-          playwright install
           
           # Create browser directory with proper permissions
           sudo mkdir -p /usr/local/share/playwright
           sudo chmod 777 /usr/local/share/playwright
+          
+          # Set environment variable for Playwright browser path
+          export PLAYWRIGHT_BROWSERS_PATH=/usr/local/share/playwright
+          
+          # Install browser dependencies first
+          playwright install-deps
+          
+          # Install browsers to the specified directory with verbose output
+          PLAYWRIGHT_BROWSERS_PATH=/usr/local/share/playwright playwright install --with-deps chromium
+          
+          # Verify browser installation
+          ls -la /usr/local/share/playwright
+          
+          # Ensure proper ownership and permissions for both playwright and the browsers
+          sudo chown -R $USER:$USER /usr/local/share/playwright
+          sudo chmod -R 755 /usr/local/share/playwright
           
           # Fix permissions for playwright driver files
           PLAYWRIGHT_DIR="/var/www/assets_extractor/backend/venv/lib/python3.12/site-packages/playwright"
