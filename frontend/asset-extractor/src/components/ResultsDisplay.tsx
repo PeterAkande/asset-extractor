@@ -158,10 +158,8 @@ const VideoModal = ({ src, onClose }: { src: string; onClose: () => void }) => {
   );
 };
 
-// SVG Modal Component - Updated to use SvgRenderer with debug option
+// SVG Modal Component - without debug option
 const SVGModal = ({ src, onClose }: { src: string; onClose: () => void }) => {
-  const [debugMode, setDebugMode] = useState(false);
-  
   return (
     <div className="image-modal-overlay" onClick={onClose}>
       <div className="image-modal-content" onClick={e => e.stopPropagation()}>
@@ -170,16 +168,7 @@ const SVGModal = ({ src, onClose }: { src: string; onClose: () => void }) => {
         </button>
         
         <div className="svg-display">
-          <SvgRenderer content={src} className="modal-svg" debug={debugMode} />
-          {process.env.NODE_ENV === 'development' && (
-            <button 
-              className="debug-svg-btn" 
-              style={{ position: 'absolute', top: '10px', right: '10px' }}
-              onClick={() => setDebugMode(!debugMode)}
-            >
-              {debugMode ? 'Hide Debug' : 'Debug'}
-            </button>
-          )}
+          <SvgRenderer content={src} className="modal-svg" />
         </div>
         
         <div className="modal-actions">
@@ -432,25 +421,12 @@ const VideoCard = ({ src, onVideoClick }: { src: string; onVideoClick: (src: str
   );
 };
 
-// SVG Icon Card Component with improved rendering and debug option
+// SVG Icon Card Component with no debug option
 const SVGIconCard = ({ src, onSVGClick }: { src: string; onSVGClick: (src: string) => void }) => {
-  const [debugMode, setDebugMode] = useState(false);
-  
   return (
     <div className="icon-card" onClick={() => onSVGClick(src)}>
       <div className="icon-preview">
-        <SvgRenderer content={src} className="icon-svg" debug={debugMode} />
-        {process.env.NODE_ENV === 'development' && (
-          <button 
-            className="debug-svg-btn" 
-            onClick={(e) => {
-              e.stopPropagation();
-              setDebugMode(!debugMode);
-            }}
-          >
-            {debugMode ? 'Hide Debug' : 'Debug'}
-          </button>
-        )}
+        <SvgRenderer content={src} className="icon-svg" />
       </div>
       <button 
         className="download-image-btn"
@@ -466,156 +442,41 @@ const SVGIconCard = ({ src, onSVGClick }: { src: string; onSVGClick: (src: strin
   );
 };
 
-// SVG Display Component with improved debugging options
-const SVGDisplay = ({ svgs, icons, onSVGClick }: { 
-  svgs: string[]; 
+// SVG Display Component - simplified with grid view only and no debug options
+const IconsDisplay = ({ icons, onSVGClick }: { 
   icons: string[];
   onSVGClick: (src: string) => void;
 }) => {
-  const [viewMode, setViewMode] = useState<'all' | 'icons' | 'graphics'>('all');
-  const [displayFormat, setDisplayFormat] = useState<'grid' | 'icons'>('icons'); // Default to icon view
-  const [debugMode, setDebugMode] = useState(false);
-  
-  const displayItems = viewMode === 'icons' 
-    ? icons 
-    : viewMode === 'graphics' 
-      ? svgs 
-      : [...icons, ...svgs];
-
-  if (displayItems.length === 0) {
+  if (icons.length === 0) {
     return <div className="empty-state">
       <span className="material-icons">format_shapes</span>
-      <h3>No SVG content found</h3>
-      <p>We couldn't find any SVG icons or graphics on this website.</p>
+      <h3>No icons found</h3>
+      <p>We couldn't find any SVG icons on this website.</p>
     </div>;
   }
 
   return (
     <div className="svg-display-container">
-      <div className="view-toggle">
-        <div className="section-controls">
-          <button 
-            className={`section-tab ${viewMode === 'all' ? 'active' : ''}`}
-            onClick={() => setViewMode('all')}
-          >
-            All SVG ({icons.length + svgs.length})
-          </button>
-          <button 
-            className={`section-tab ${viewMode === 'icons' ? 'active' : ''}`}
-            onClick={() => setViewMode('icons')}
-          >
-            Icons ({icons.length})
-          </button>
-          <button 
-            className={`section-tab ${viewMode === 'graphics' ? 'active' : ''}`}
-            onClick={() => setViewMode('graphics')}
-          >
-            Graphics ({svgs.length})
-          </button>
-        </div>
-        
-        <div className="display-controls">
-          <button 
-            className={`toggle-view-button ${displayFormat === 'grid' ? 'active' : ''}`}
-            onClick={() => setDisplayFormat('grid')}
-          >
-            <span className="material-icons">grid_view</span>
-            Grid View
-          </button>
-          <button 
-            className={`toggle-view-button ${displayFormat === 'icons' ? 'active' : ''}`}
-            onClick={() => setDisplayFormat('icons')}
-          >
-            <span className="material-icons">apps</span>
-            Icon View
-          </button>
-          <p className="view-toggle-info">
-            {displayFormat === 'icons' 
-              ? 'Compact view for icons and small SVGs' 
-              : 'Detailed grid view for all SVG content'}
-          </p>
-        </div>
+      <div className="image-grid">
+        {icons.map((icon, index) => (
+          <div key={`svg-card-${index}`} className="image-card">
+            <div 
+              className="image-preview" 
+              onClick={() => onSVGClick(icon)}
+              style={{ background: '#f5f5f7' }}
+            >
+              <SvgRenderer content={icon} className="grid-svg" />
+            </div>
+            <button 
+              className="download-image-btn"
+              onClick={() => onSVGClick(icon)}
+            >
+              <span className="material-icons">visibility</span>
+              View SVG
+            </button>
+          </div>
+        ))}
       </div>
-
-      {/* Add debug toggle in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="debug-controls">
-          <button 
-            className={`debug-toggle ${debugMode ? 'active' : ''}`}
-            onClick={() => setDebugMode(!debugMode)}
-          >
-            <span className="material-icons">code</span>
-            {debugMode ? 'Hide Debug' : 'Show Debug'}
-          </button>
-          
-          {debugMode && (
-            <div className="svg-debug-info expanded">
-              <p>Icons found: {icons.length}</p>
-              <p>SVGs found: {svgs.length}</p>
-              <details>
-                <summary>First icon data</summary>
-                <pre>{icons.length > 0 ? icons[0].substring(0, 100) + "..." : "No icons"}</pre>
-              </details>
-              <details>
-                <summary>First SVG data</summary>
-                <pre>{svgs.length > 0 ? svgs[0].substring(0, 100) + "..." : "No SVGs"}</pre>
-              </details>
-            </div>
-          )}
-        </div>
-      )}
-
-      {displayFormat === 'icons' ? (
-        <div className="icon-grid">
-          {displayItems.map((svg, index) => (
-            <SVGIconCard 
-              key={`svg-icon-${index}`}
-              src={svg} 
-              onSVGClick={onSVGClick}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="image-grid">
-          {displayItems.map((svg, index) => (
-            <div key={`svg-card-${index}`} className="image-card">
-              <div 
-                className="image-preview" 
-                onClick={() => onSVGClick(svg)}
-                style={{ background: '#f5f5f7' }}
-              >
-                <SvgRenderer content={svg} className="grid-svg" />
-                <div className="image-overlay">
-                  <button className="preview-btn">
-                    <span className="material-icons">visibility</span>
-                  </button>
-                </div>
-              </div>
-              <button 
-                className="download-image-btn"
-                onClick={() => onSVGClick(svg)}
-              >
-                <span className="material-icons">visibility</span>
-                View SVG
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Add debug information - can be removed in production */}
-      {displayItems.length > 0 && (
-        <div className="svg-debug-panel">
-          <details>
-            <summary>Debug Information ({displayItems.length} items)</summary>
-            <div className="debug-content">
-              <p>First SVG format: {displayItems[0].substring(0, 50)}...</p>
-              <p>Icons count: {icons.length}</p>
-              <p>SVGs count: {svgs.length}</p>
-            </div>
-          </details>
-        </div>
-      )}
     </div>
   );
 };
@@ -640,12 +501,19 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
   const { colors, fonts, assets } = results;
   const allColors = [...(colors.from_css || []), ...(colors.from_images || [])];
   
+  // Move SVGs to image category but keep icons separate
+  const svgIcons = assets.icons || [];
+  const svgGraphics = assets.svgs || [];
+  
   const validImageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.ico'];
-  const validImages = (assets.images || []).filter(img => 
-    !img.startsWith('data:') || 
-    validImageExtensions.some(ext => img.toLowerCase().includes(ext)) ||
-    /\.(jpe?g|png|gif|webp|bmp|ico)(\?.*)?$/i.test(img)
-  );
+  const validImages = [
+    ...(assets.images || []).filter(img => 
+      !img.startsWith('data:') || 
+      validImageExtensions.some(ext => img.toLowerCase().includes(ext)) ||
+      /\.(jpe?g|png|gif|webp|bmp|ico)(\?.*)?$/i.test(img)
+    ),
+    ...svgGraphics // Add regular SVGs to the images category
+  ];
   
   const validVideoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.wmv', '.flv'];
   const validVideos = (assets.videos || []).filter(vid => 
@@ -656,10 +524,6 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
     vid.includes('dailymotion.com') ||
     vid.includes('facebook.com/plugins/video')
   );
-
-  const svgIcons = assets.icons || [];
-  const svgGraphics = assets.svgs || [];
-  const totalSvgs = svgIcons.length + svgGraphics.length;
   
   const filteredImages = search ? 
     validImages.filter(img => img.toLowerCase().includes(search.toLowerCase())) : 
@@ -682,40 +546,35 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
             onClick={() => setActiveTab('colors')}
           >
             <span className="material-icons">palette</span>
-            <span>Colors</span>
-            <span className="tab-count">{allColors.length}</span>
+            Colors ({allColors.length})
           </button>
           <button 
             className={`tab-button ${activeTab === 'images' ? 'active' : ''}`} 
             onClick={() => setActiveTab('images')}
           >
             <span className="material-icons">image</span>
-            <span>Images</span>
-            <span className="tab-count">{validImages.length}</span>
+            Images ({validImages.length})
           </button>
           <button 
             className={`tab-button ${activeTab === 'videos' ? 'active' : ''}`} 
             onClick={() => setActiveTab('videos')}
           >
-            <span className="material-icons">videocam</span>
-            <span>Videos</span>
-            <span className="tab-count">{validVideos.length}</span>
+            <span className="material-icons">movie</span>
+            Videos ({validVideos.length})
           </button>
           <button 
-            className={`tab-button ${activeTab === 'svg' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('svg')}
+            className={`tab-button ${activeTab === 'icons' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('icons')}
           >
             <span className="material-icons">format_shapes</span>
-            <span>SVG</span>
-            <span className="tab-count">{totalSvgs}</span>
+            Icons ({svgIcons.length})
           </button>
           <button 
             className={`tab-button ${activeTab === 'fonts' ? 'active' : ''}`} 
             onClick={() => setActiveTab('fonts')}
           >
             <span className="material-icons">text_fields</span>
-            <span>Fonts</span>
-            <span className="tab-count">{fonts?.length || 0}</span>
+            Fonts ({fonts?.length || 0})
           </button>
         </div>
       </div>
@@ -743,38 +602,59 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
           <div className="images-tab tab-content">
             {filteredImages.length > 0 ? (
               <div className="image-grid">
-                {filteredImages.map((image, index) => (
-                  <div key={index} className="image-card">
-                    <div 
-                      className="image-preview" 
-                      onClick={() => setSelectedImage(image)}
-                      style={{ 
-                        backgroundImage: `url(${image})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center'
-                      }}
-                    >
-                      <div className="image-overlay">
-                        <button className="preview-btn">
-                          <span className="material-icons">zoom_in</span>
-                        </button>
+                {filteredImages.map((image, index) => {
+                  // Determine if this is an SVG (either from svgGraphics or starts with <svg)
+                  const isSvg = svgGraphics.includes(image) || 
+                               (typeof image === 'string' && image.trim().startsWith('<svg'));
+                  
+                  return (
+                    <div key={`img-${index}`} className="image-card">
+                      <div 
+                        className={`image-preview ${isSvg ? 'svg-preview' : ''}`}
+                        onClick={() => isSvg ? setSelectedSVG(image) : setSelectedImage(image)}
+                        style={isSvg ? { background: 'transparent' } : undefined}
+                      >
+                        {isSvg ? (
+                          <SvgRenderer content={image} />
+                        ) : (
+                          <img 
+                            src={image} 
+                            alt={`Asset ${index + 1}`} 
+                            loading="lazy" 
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = 'https://placehold.co/400x300?text=Image+Failed+to+Load';
+                            }}
+                          />
+                        )}
+                        <div className="image-overlay">
+                          <button className="preview-btn">
+                            <span className="material-icons">visibility</span>
+                          </button>
+                        </div>
                       </div>
+                      <button 
+                        className="download-image-btn"
+                        onClick={() => {
+                          if (isSvg) {
+                            setSelectedSVG(image);
+                          } else {
+                            downloadImage(image, image.split('/').pop() || 'image.jpg');
+                          }
+                        }}
+                      >
+                        <span className="material-icons">{isSvg ? 'visibility' : 'download'}</span>
+                        {isSvg ? 'View SVG' : 'Download'}
+                      </button>
                     </div>
-                    <button 
-                      className="download-image-btn"
-                      onClick={() => downloadImage(image, image.split('/').pop() || 'image.jpg')}
-                    >
-                      <span className="material-icons">download</span>
-                      Download
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="empty-state">
-                <span className="material-icons">hide_image</span>
+                <span className="material-icons">image</span>
                 <h3>No images found</h3>
-                <p>{search ? `No images matching "${search}"` : "We couldn't find any images on this website."}</p>
+                <p>We couldn't find any images on this website.</p>
               </div>
             )}
           </div>
@@ -786,26 +666,25 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
               <div className="video-grid">
                 {filteredVideos.map((video, index) => (
                   <VideoCard 
-                    key={index} 
+                    key={`video-${index}`}
                     src={video} 
-                    onVideoClick={(src) => setSelectedVideo(src)}
+                    onVideoClick={(src) => setSelectedVideo(src)} 
                   />
                 ))}
               </div>
             ) : (
               <div className="empty-state">
-                <span className="material-icons">videocam_off</span>
+                <span className="material-icons">movie</span>
                 <h3>No videos found</h3>
-                <p>{search ? `No videos matching "${search}"` : "We couldn't find any videos on this website."}</p>
+                <p>We couldn't find any videos on this website.</p>
               </div>
             )}
           </div>
         )}
 
-        {activeTab === 'svg' && (
-          <div className="svg-tab tab-content">
-            <SVGDisplay 
-              svgs={svgGraphics}
+        {activeTab === 'icons' && (
+          <div className="icons-tab tab-content">
+            <IconsDisplay 
               icons={svgIcons}
               onSVGClick={(src) => setSelectedSVG(src)}
             />
@@ -824,7 +703,7 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
               <div className="empty-state">
                 <span className="material-icons">format_clear</span>
                 <h3>No fonts found</h3>
-                <p>{search ? `No fonts matching "${search}"` : "We couldn't find any fonts on this website."}</p>
+                <p>We couldn't find any fonts on this website.</p>
               </div>
             )}
           </div>

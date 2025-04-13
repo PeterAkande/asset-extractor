@@ -1082,14 +1082,6 @@
   background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 
-.svg-container.inverted {
-  background-color: #333;
-  background-image: linear-gradient(45deg, #444 25%, transparent 25%), 
-                    linear-gradient(-45deg, #444 25%, transparent 25%), 
-                    linear-gradient(45deg, transparent 75%, #444 75%), 
-                    linear-gradient(-45deg, transparent 75%, #444 75%);
-}
-
 /* Force SVG visibility regardless of rendering method */
 .svg-container svg,
 .svg-container img.svg-img,
@@ -1101,10 +1093,17 @@
   display: block !important;
   visibility: visible !important;
   margin: auto;
-  /* Add stroke to make shapes more visible */
-  stroke: #333;
-  stroke-width: 0.5;
-  fill-opacity: 0.9;
+}
+
+/* SVG in image grid should have transparent background */
+.svg-preview {
+  background: transparent !important;
+  background-image: linear-gradient(45deg, rgba(224, 224, 224, 0.5) 25%, transparent 25%), 
+                    linear-gradient(-45deg, rgba(224, 224, 224, 0.5) 25%, transparent 25%), 
+                    linear-gradient(45deg, transparent 75%, rgba(224, 224, 224, 0.5) 75%), 
+                    linear-gradient(-45deg, transparent 75%, rgba(224, 224, 224, 0.5) 75%) !important;
+  background-size: 20px 20px !important;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px !important;
 }
 
 /* Icon Card with better visibility */
@@ -1141,32 +1140,118 @@
   overflow: hidden;
 }
 
-/* SVG debug tools */
-.svg-debug-tools {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(0,0,0,0.7);
-  padding: 5px;
+/* Error state styling */
+.svg-error {
   display: flex;
-  justify-content: space-around;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #dc3545;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(220, 53, 69, 0.1);
+  border-radius: 4px;
 }
 
-.svg-debug-tools button {
-  background: #444;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  padding: 2px 5px;
-  font-size: 10px;
+.svg-error .material-icons {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.svg-error p {
+  margin: 0;
+  font-size: 12px;
+  color: #dc3545;
+}
+
+/* Retry button styling */
+.svg-retry-btn {
+  background: #f1f3f4;
+  border: 1px solid #dadce0;
+  color: #5f6368;
+  padding: 8px 16px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
   cursor: pointer;
+  margin: auto;
 }
 
-.svg-debug-info {
-  color: white;
-  font-size: 10px;
+.svg-retry-btn:hover {
+  background: #e8eaed;
+}
+
+/* Fix SVG path rendering */
+.svg-container svg path,
+.svg-container svg rect,
+.svg-container svg circle,
+.svg-container svg line,
+.svg-container svg polyline,
+.svg-container svg polygon {
+  vector-effect: non-scaling-stroke;
+  fill: attr(fill);
+  stroke: attr(stroke);
+}
+
+/* Override any problematic SVG styles */
+svg[width="0"], svg[height="0"], 
+svg[width="0px"], svg[height="0px"] {
+  width: 80% !important;
+  height: 80% !important;
+}
+
+/* Make SVG icons section display as grid */
+.icons-tab .image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+/* Enhanced SVG display in modal */
+.svg-display {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  max-width: 80vw;
+  max-height: 70vh;
+  box-shadow: var(--shadow-lg);
+}
+
+.svg-display svg {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Empty state for no SVGs */
+.empty-state {
   text-align: center;
+  padding: 48px 0;
+  color: var(--google-gray-600);
+}
+
+.empty-state .material-icons {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--google-gray-400);
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--google-gray-800);
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--google-gray-600);
 }
 
 /* SVG and Icon specific styles */

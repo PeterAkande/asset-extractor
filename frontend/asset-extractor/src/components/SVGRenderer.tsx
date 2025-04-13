@@ -6,7 +6,6 @@ interface SvgRendererProps {
   onClick?: () => void;
   width?: string | number;
   height?: string | number;
-  debug?: boolean;
 }
 
 /**
@@ -18,8 +17,7 @@ const SvgRenderer: React.FC<SvgRendererProps> = ({
   className = '', 
   onClick, 
   width, 
-  height,
-  debug = false
+  height 
 }) => {
   const [renderMethod, setRenderMethod] = useState<'inline' | 'img' | 'object' | 'error'>('inline');
   const [key, setKey] = useState<number>(0); // Used to force re-render
@@ -156,11 +154,6 @@ const SvgRenderer: React.FC<SvgRendererProps> = ({
     }
   };
 
-  // Toggle light/dark mode for better visibility
-  const toggleInvert = () => {
-    setIsInverted(!isInverted);
-  };
-
   // Force re-render with inline method
   const handleRetry = () => {
     setKey(prev => prev + 1);
@@ -188,88 +181,62 @@ const SvgRenderer: React.FC<SvgRendererProps> = ({
     return "";
   };
 
-  // Container styling with debug options
+  // Container styling with checkered background
   const containerStyle = {
     width, 
     height,
-    backgroundColor: debug ? '#e9eaeb' : 'transparent',
-    border: debug ? '1px dashed #ccc' : 'none',
-    filter: isInverted ? 'invert(1)' : 'none',
+    backgroundColor: '#f5f5f7',
   };
-
-  // Debugging tools if debug is enabled
-  const debugTools = debug && (
-    <div className="svg-debug-tools">
-      <button onClick={toggleInvert} title="Toggle color inversion for better visibility">
-        {isInverted ? "Normal" : "Invert"}
-      </button>
-      <button onClick={handleRetry} title="Try rendering again">
-        Retry
-      </button>
-      <div className="svg-debug-info">
-        Method: {renderMethod}
-      </div>
-    </div>
-  );
 
   // Render SVG based on selected method
   switch (renderMethod) {
     case 'inline':
       return (
-        <div style={{ position: 'relative' }}>
-          <div 
-            ref={containerRef}
-            className={`svg-container ${className} ${isInverted ? 'inverted' : ''}`}
-            data-svg-key={key}
-            onClick={onClick}
-            dangerouslySetInnerHTML={{ __html: getSvgSource() }}
-            style={containerStyle}
-          />
-          {debugTools}
-        </div>
+        <div 
+          ref={containerRef}
+          className={`svg-container ${className}`}
+          data-svg-key={key}
+          onClick={onClick}
+          dangerouslySetInnerHTML={{ __html: getSvgSource() }}
+          style={containerStyle}
+        />
       );
       
     case 'img':
       return (
-        <div style={{ position: 'relative' }}>
-          <div 
-            className={`svg-container ${className} ${isInverted ? 'inverted' : ''}`}
-            onClick={onClick}
-            style={containerStyle}
-          >
-            <img 
-              src={getDataUri()}
-              alt="SVG content" 
-              onError={handleRenderError}
-              className="svg-img"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            />
-          </div>
-          {debugTools}
+        <div 
+          className={`svg-container ${className}`}
+          onClick={onClick}
+          style={containerStyle}
+        >
+          <img 
+            src={getDataUri()}
+            alt="SVG content" 
+            onError={handleRenderError}
+            className="svg-img"
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
         </div>
       );
       
     case 'object':
       return (
-        <div style={{ position: 'relative' }}>
-          <div 
-            className={`svg-container ${className} ${isInverted ? 'inverted' : ''}`}
-            onClick={onClick}
-            style={containerStyle}
+        <div 
+          className={`svg-container ${className}`}
+          onClick={onClick}
+          style={containerStyle}
+        >
+          <object 
+            data={getDataUri()} 
+            type="image/svg+xml"
+            className="svg-object"
+            onError={handleRenderError}
+            style={{ width: '100%', height: '100%' }}
           >
-            <object 
-              data={getDataUri()} 
-              type="image/svg+xml"
-              className="svg-object"
-              onError={handleRenderError}
-              style={{ width: '100%', height: '100%' }}
-            >
-              <button onClick={handleRetry} className="svg-retry-btn">
-                <span className="material-icons">refresh</span> Retry
-              </button>
-            </object>
-          </div>
-          {debugTools}
+            <button onClick={handleRetry} className="svg-retry-btn">
+              <span className="material-icons">refresh</span> Retry
+            </button>
+          </object>
         </div>
       );
       
