@@ -479,7 +479,7 @@ class WebAssetExtractor:
                 browser = await p.chromium.launch(headless=True)
                 context = await browser.new_context(viewport={'width': 1280, 'height': 800})
                 page = await context.new_page()
-                await page.goto(self.url, wait_until='networkidle')
+                await page.goto(self.url, wait_until='networkidle', timeout=100000)
                 
                 # Get computed font families from all elements
                 fonts_from_computed = await page.evaluate('''() => {
