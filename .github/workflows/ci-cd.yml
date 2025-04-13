@@ -1,0 +1,219 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  test:
+    name: Test Application
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      # Set up Python for backend testing
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+          
+      - name: Run backend tests
+        working-directory: ./backend
+        run: pytest
+        
+      # Set up Node.js for frontend testing
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './frontend/asset-extractor/package-lock.json'
+          
+      - name: Install frontend dependencies
+        working-directory: ./frontend/asset-extractor
+        run: npm ci
+        
+      - name: Build frontend
+        working-directory: ./frontend/asset-extractor
+        run: npm run build
+        
+      - name: Run frontend tests
+        working-directory: ./frontend/asset-extractor
+        run: npm test -- --passWithNoTests
+  
+  deploy:
+    name: Deploy Application
+    needs: test
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './frontend/asset-extractor/package-lock.json'
+          
+      - name: Build frontend for production
+        working-directory: ./frontend/asset-extractor
+        run: |
+          npm ci
+          npm run build
+          
+      # Prepare deployment package
+      - name: Prepare deployment package
+        run: |
+          mkdir -p deployment
+          cp -r backend deployment/
+          cp -r frontend/asset-extractor/build deployment/frontend
+          cp deployment_scripts/* deployment/ || echo "No deployment scripts found"
+          
+          # Create deployment script
+          cat > deployment/deploy.sh << 'EOF'
+          #!/bin/bash
+          set -e
+
+          echo "Starting deployment process..."
+          
+          # Update system packages
+          echo "Updating system packages..."
+          sudo apt-get update
+          sudo apt-get upgrade -y
+          
+          # Install Python dependencies
+          echo "Installing Python dependencies..."
+          sudo apt-get install -y python3 python3-pip python3-venv
+          
+          # Install Node.js and npm if not already installed
+          if ! command -v node &> /dev/null; then
+            echo "Installing Node.js and npm..."
+            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+          fi
+          
+          # Install Nginx if not already installed
+          if ! command -v nginx &> /dev/null; then
+            echo "Installing Nginx..."
+            sudo apt-get install -y nginx
+          fi
+          
+          # Set up backend
+          echo "Setting up backend..."
+          cd /var/www/assets_extractor/backend
+          
+          # Create virtual environment if it doesn't exist
+          if [ ! -d "venv" ]; then
+            python3 -m venv venv
+          fi
+          
+          # Activate virtual environment and install dependencies
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install gunicorn
+          
+          # Set up systemd service for backend
+          echo "Setting up systemd service for backend..."
+          sudo tee /etc/systemd/system/assets-extractor.service > /dev/null << 'EOSERVICE'
+          [Unit]
+          Description=Assets Extractor Backend Service
+          After=network.target
+          
+          [Service]
+          User=www-data
+          Group=www-data
+          WorkingDirectory=/var/www/assets_extractor/backend
+          ExecStart=/var/www/assets_extractor/backend/venv/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app -b 127.0.0.1:8000
+          Restart=always
+          
+          [Install]
+          WantedBy=multi-user.target
+          EOSERVICE
+          
+          # Configure Nginx
+          echo "Configuring Nginx..."
+          sudo tee /etc/nginx/sites-available/assets-extractor > /dev/null << 'EONGINX'
+          server {
+              listen 80;
+              server_name _;
+              
+              location /api {
+                  proxy_pass http://127.0.0.1:8000;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+              
+              location / {
+                  root /var/www/assets_extractor/frontend;
+                  try_files $uri $uri/ /index.html;
+              }
+          }
+          EONGINX
+          
+          # Enable the site and restart Nginx
+          sudo ln -sf /etc/nginx/sites-available/assets-extractor /etc/nginx/sites-enabled/
+          sudo rm -f /etc/nginx/sites-enabled/default
+          sudo nginx -t
+          sudo systemctl restart nginx
+          
+          # Start/restart the backend service
+          sudo systemctl daemon-reload
+          sudo systemctl enable assets-extractor
+          sudo systemctl restart assets-extractor
+          
+          echo "Deployment completed successfully!"
+          EOF
+          
+          chmod +x deployment/deploy.sh
+          
+      - name: Create SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key.pem
+          chmod 600 ~/.ssh/deploy_key.pem
+          echo "StrictHostKeyChecking no" > ~/.ssh/config
+          
+      - name: Deploy to server
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+        run: |
+          # Create deployment directory on server
+          ssh -i ~/.ssh/deploy_key.pem $SERVER_USERNAME@$SERVER_HOST "sudo mkdir -p /var/www/assets_extractor && sudo chown -R $SERVER_USERNAME:$SERVER_USERNAME /var/www/assets_extractor"
+          
+          # Synchronize files to server
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key.pem" --delete deployment/ $SERVER_USERNAME@$SERVER_HOST:/var/www/assets_extractor/
+          
+          # Execute deployment script
+          ssh -i ~/.ssh/deploy_key.pem $SERVER_USERNAME@$SERVER_HOST "cd /var/www/assets_extractor && sudo bash deploy.sh"
+          
+      - name: Clean up SSH key
+        run: rm -f ~/.ssh/deploy_key.pem
