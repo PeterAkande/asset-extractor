@@ -182,27 +182,26 @@ jobs:
           
           # Create browser directory with proper permissions
           sudo mkdir -p /usr/local/share/playwright
-          sudo chown -R www-data:www-data /usr/local/share/playwright
-          sudo chown -R www-data:www-data /var/www/assets_extractor/backend/venv
+          sudo chmod 777 /usr/local/share/playwright
           
-          # Copy Playwright to www-data's path
-          sudo cp /var/www/assets_extractor/backend/venv/bin/playwright /usr/local/bin/
-          sudo chmod +x /usr/local/bin/
+          # Fix permissions for playwright driver files
+          PLAYWRIGHT_DIR="/var/www/assets_extractor/backend/venv/lib/python3.12/site-packages/playwright"
+          echo "Setting proper permissions for Playwright driver..."
+          sudo find $PLAYWRIGHT_DIR -type f -name "*.sh" -exec chmod +x {} \;
+          sudo find $PLAYWRIGHT_DIR -type f -name "node" -exec chmod +x {} \;
+          sudo find $PLAYWRIGHT_DIR/driver -type f -exec chmod +x {} \;
+          sudo find $PLAYWRIGHT_DIR/driver -type d -exec chmod 755 {} \;
+          
+          # Ensure directory exists for browser downloads
+          sudo mkdir -p /tmp/playwright-downloads
+          sudo chmod 777 /tmp/playwright-downloads
           
           # Set proper permissions for the application
-          sudo chown -R www-data:www-data /var/www/assets_extractor
+          sudo chown -R $USER:$USER /var/www/assets_extractor
           sudo chmod -R 755 /var/www/assets_extractor
           
-          # Ensure venv is accessible to www-data
-          sudo chown -R www-data:www-data /var/www/assets_extractor/backend/venv
-          
-          # Set proper permissions for nginx to access the files
-          echo "Setting correct permissions for nginx..."
-          sudo chmod -R 755 /var/www/assets_extractor
-          sudo find /var/www/assets_extractor -type f -exec chmod 644 {} \;
-          sudo find /var/www/assets_extractor/backend/venv -type d -exec chmod 755 {} \;
-          sudo find /var/www/assets_extractor/backend/venv -type f -exec chmod 644 {} \;
-          sudo find /var/www/assets_extractor/backend/venv/bin -type f -exec chmod 755 {} \;
+          # Ensure venv is accessible
+          sudo chmod -R 755 /var/www/assets_extractor/backend/venv
           
           # Set up systemd service with updated environment and permissions
           echo "Setting up systemd service for backend..."
@@ -212,12 +211,14 @@ jobs:
           After=network.target
           
           [Service]
-          User=ubuntu
-          Group=sudo
+          User=$USER
+          Group=$USER
           WorkingDirectory=/var/www/assets_extractor/backend
           Environment="PATH=/var/www/assets_extractor/backend/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
           Environment="PYTHONPATH=/var/www/assets_extractor/backend"
-          Environment="HOME=/var/www/assets_extractor/backend"
+          Environment="HOME=/home/$USER"
+          Environment="PLAYWRIGHT_BROWSERS_PATH=/usr/local/share/playwright"
+          Environment="DISPLAY=:99"
           ExecStart=/var/www/assets_extractor/backend/venv/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app -b 127.0.0.1:8000
           Restart=always
           
@@ -403,6 +404,7 @@ jobs:
           echo "Nginx access log: sudo tail -f /var/log/nginx/assets-extractor-access.log"
           echo "Nginx error log: sudo tail -f /var/log/nginx/assets-extractor-error.log"
           echo "Backend service log: sudo journalctl -u assets-extractor -f"
+          echo "Checking Playwright permissions: ls -la /var/www/assets_extractor/backend/venv/lib/python3.12/site-packages/playwright/driver/node"
           echo "----------"
           EOF
           
