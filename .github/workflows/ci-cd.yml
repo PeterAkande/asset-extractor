@@ -212,8 +212,8 @@ jobs:
           After=network.target
           
           [Service]
-          User=www-data
-          Group=www-data
+          User=ubuntu
+          Group=sudo
           WorkingDirectory=/var/www/assets_extractor/backend
           Environment="PATH=/var/www/assets_extractor/backend/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
           Environment="PYTHONPATH=/var/www/assets_extractor/backend"
