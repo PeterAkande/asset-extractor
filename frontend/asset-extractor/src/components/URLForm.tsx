@@ -35,6 +35,7 @@ const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLF
       new URL(url);
       setIsValidUrl(true);
     } catch (e) {
+      console.log(e)
       setIsValidUrl(false);
     }
   }, [url]);
@@ -51,6 +52,7 @@ const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLF
     try {
       new URL(url);
     } catch (e) {
+      console.log(e)
       setError('Please enter a valid URL with http:// or https://');
       return;
     }
@@ -147,6 +149,7 @@ const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLF
                 key={index}
                 type="button" 
                 className="sample-url-card"
+                // eslint-disable-next-line react-hooks/rules-of-hooks
                 onClick={() => useExampleUrl(sample.url)}
                 disabled={isLoading}
               >

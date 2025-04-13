@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ExtractorResponse, ColorInfo, FontInfo, downloadImage } from '../api/extractorApi';
 import SvgRenderer from './SvgRenderer';
 import './ResultsDisplay.css';
@@ -8,48 +8,48 @@ interface ResultsDisplayProps {
 }
 
 // Helper function to safely decode SVG data URIs with improved error handling
-const decodeSvgContent = (src: string): string => {
-  try {
-    // For debugging
-    console.log("SVG source:", src.substring(0, 50) + "...");
+// const decodeSvgContent = (src: string): string => {
+//   try {
+//     // For debugging
+//     console.log("SVG source:", src.substring(0, 50) + "...");
     
-    // Handle different data URI formats
-    if (src.startsWith('data:image/svg+xml;base64,')) {
-      const base64Content = src.split('base64,')[1];
-      console.log("Found base64 SVG, length:", base64Content?.length);
-      return atob(base64Content || "");
-    } 
-    else if (src.startsWith('data:image/svg+xml,')) {
-      // URL-encoded SVG
-      console.log("Found URL-encoded SVG");
-      return decodeURIComponent(src.split('data:image/svg+xml,')[1]);
-    }
-    else if (src.startsWith('<svg')) {
-      // Raw SVG markup
-      console.log("Found raw SVG markup");
-      return src;
-    }
+//     // Handle different data URI formats
+//     if (src.startsWith('data:image/svg+xml;base64,')) {
+//       const base64Content = src.split('base64,')[1];
+//       console.log("Found base64 SVG, length:", base64Content?.length);
+//       return atob(base64Content || "");
+//     } 
+//     else if (src.startsWith('data:image/svg+xml,')) {
+//       // URL-encoded SVG
+//       console.log("Found URL-encoded SVG");
+//       return decodeURIComponent(src.split('data:image/svg+xml,')[1]);
+//     }
+//     else if (src.startsWith('<svg')) {
+//       // Raw SVG markup
+//       console.log("Found raw SVG markup");
+//       return src;
+//     }
     
-    // Default case - try to decode as base64
-    if (src.includes(',')) {
-      const base64Content = src.split(',')[1]; 
-      console.log("Attempting to decode as base64, length:", base64Content?.length);
-      return atob(base64Content || "");
-    }
+//     // Default case - try to decode as base64
+//     if (src.includes(',')) {
+//       const base64Content = src.split(',')[1]; 
+//       console.log("Attempting to decode as base64, length:", base64Content?.length);
+//       return atob(base64Content || "");
+//     }
     
-    // Last resort - return as is
-    console.log("Returning SVG as-is");
-    return src;
-  } catch (error) {
-    console.error('Failed to decode SVG content:', error);
-    console.error('Problematic SVG source:', src);
-    // Return a placeholder SVG as fallback
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-              <circle cx="12" cy="12" r="10" fill="#f44336" fill-opacity="0.6" />
-              <text x="12" y="14" font-size="12" text-anchor="middle" fill="white">?</text>
-            </svg>`;
-  }
-};
+//     // Last resort - return as is
+//     console.log("Returning SVG as-is");
+//     return src;
+//   } catch (error) {
+//     console.error('Failed to decode SVG content:', error);
+//     console.error('Problematic SVG source:', src);
+//     // Return a placeholder SVG as fallback
+//     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+//               <circle cx="12" cy="12" r="10" fill="#f44336" fill-opacity="0.6" />
+//               <text x="12" y="14" font-size="12" text-anchor="middle" fill="white">?</text>
+//             </svg>`;
+//   }
+// };
 
 // Image Modal Component
 const ImageModal = ({ src, onClose }: { src: string; onClose: () => void }) => {
@@ -421,26 +421,26 @@ const VideoCard = ({ src, onVideoClick }: { src: string; onVideoClick: (src: str
   );
 };
 
-// SVG Icon Card Component with no debug option
-const SVGIconCard = ({ src, onSVGClick }: { src: string; onSVGClick: (src: string) => void }) => {
-  return (
-    <div className="icon-card" onClick={() => onSVGClick(src)}>
-      <div className="icon-preview">
-        <SvgRenderer content={src} className="icon-svg" />
-      </div>
-      <button 
-        className="download-image-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          onSVGClick(src);
-        }}
-      >
-        <span className="material-icons">visibility</span>
-        View SVG
-      </button>
-    </div>
-  );
-};
+// // SVG Icon Card Component with no debug option
+// const SVGIconCard = ({ src, onSVGClick }: { src: string; onSVGClick: (src: string) => void }) => {
+//   return (
+//     <div className="icon-card" onClick={() => onSVGClick(src)}>
+//       <div className="icon-preview">
+//         <SvgRenderer content={src} className="icon-svg" />
+//       </div>
+//       <button 
+//         className="download-image-btn"
+//         onClick={(e) => {
+//           e.stopPropagation();
+//           onSVGClick(src);
+//         }}
+//       >
+//         <span className="material-icons">visibility</span>
+//         View SVG
+//       </button>
+//     </div>
+//   );
+// };
 
 // SVG Display Component - simplified with grid view only and no debug options
 const IconsDisplay = ({ icons, onSVGClick }: { 
@@ -492,7 +492,7 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [selectedSVG, setSelectedSVG] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [search] = useState('');
   
   if (!results) {
     return <div className="no-data">No results to display</div>;

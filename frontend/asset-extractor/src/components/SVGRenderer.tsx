@@ -22,7 +22,7 @@ const SvgRenderer: React.FC<SvgRendererProps> = ({
   const [renderMethod, setRenderMethod] = useState<'inline' | 'img' | 'object' | 'error'>('inline');
   const [key, setKey] = useState<number>(0); // Used to force re-render
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isInverted, setIsInverted] = useState(false);
+//   const [isInverted, setIsInverted] = useState(false);
 
   // Reset renderer when content changes
   useEffect(() => {
