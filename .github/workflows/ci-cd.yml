@@ -457,7 +457,7 @@ jobs:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
           API_DOMAIN: ${{ secrets.API_DOMAIN || '_' }}
-          CERTBOT_EMAIL: ${{ secrets.CERTBOT_EMAIL || '_' }}
+          CERTBOT_EMAIL: ${{ secrets.CERTBOT_EMAIL || 'admin@example.com' }}
         run: |
           # Create deployment directory on server
           ssh -i ~/.ssh/deploy_key.pem $SERVER_USERNAME@$SERVER_HOST "sudo mkdir -p /var/www/assets_extractor && sudo chown -R $SERVER_USERNAME:$SERVER_USERNAME /var/www/assets_extractor"
@@ -465,8 +465,8 @@ jobs:
           # Synchronize files to server
           rsync -avz -e "ssh -i ~/.ssh/deploy_key.pem" --delete deployment/ $SERVER_USERNAME@$SERVER_HOST:/var/www/assets_extractor/
           
-          # Execute deployment script with domain name parameter
-          ssh -i ~/.ssh/deploy_key.pem $SERVER_USERNAME@$SERVER_HOST "cd /var/www/assets_extractor && sudo API_DOMAIN=\"${API_DOMAIN}\" && sudo CERTBOT_EMAIL=\"${CERTBOT_EMAIL}\" bash deploy.sh"
+          # Execute deployment script with domain name and email parameters
+          ssh -i ~/.ssh/deploy_key.pem $SERVER_USERNAME@$SERVER_HOST "cd /var/www/assets_extractor && sudo -E env API_DOMAIN=\"${API_DOMAIN}\" CERTBOT_EMAIL=\"${CERTBOT_EMAIL}\" bash deploy.sh"
           
       - name: Clean up SSH key
         run: rm -f ~/.ssh/deploy_key.pem
