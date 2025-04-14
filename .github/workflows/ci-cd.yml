@@ -247,13 +247,14 @@ jobs:
           
           # Configure Nginx with improved error handling and proper access
           echo "Configuring Nginx..."
-          sudo tee /etc/nginx/sites-available/assets-extractor > /dev/null << 'EONGINX'
+          # Use double quotes to allow variable expansion
+          sudo tee /etc/nginx/sites-available/assets-extractor > /dev/null << EONGINX
           server {
               listen 80 default_server;
               listen [::]:80 default_server;
               
-              # Server name - use IP or domain name
-              server_name _;
+              # Server name - use domain from environment variable
+              server_name ${API_DOMAIN};
               
               # Enable access and error logs for debugging
               access_log /var/log/nginx/assets-extractor-access.log;
@@ -323,6 +324,21 @@ jobs:
               }
           }
           EONGINX
+          
+          # Install Certbot and generate SSL certificate if domain is provided
+          if [[ "${API_DOMAIN}" != "_" && "${API_DOMAIN}" != "localhost" && ! -z "${API_DOMAIN}" ]]; then
+            echo "Setting up SSL with Certbot for domain: ${API_DOMAIN}"
+            
+            # Install Certbot
+            sudo apt-get install -y certbot python3-certbot-nginx
+            
+            # Generate certificate
+            sudo certbot --nginx -d ${API_DOMAIN} --non-interactive --agree-tos --email ${CERTBOT_EMAIL} --redirect
+            
+            echo "SSL certificate installed successfully"
+          else
+            echo "No valid domain provided. Skipping SSL setup."
+          fi
           
           # Create simple error pages
           echo "Creating error pages..."
@@ -440,6 +456,8 @@ jobs:
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+          API_DOMAIN: ${{ secrets.API_DOMAIN || '_' }}
+          CERTBOT_EMAIL: ${{ secrets.CERTBOT_EMAIL || '_' }}
         run: |
           # Create deployment directory on server
           ssh -i ~/.ssh/deploy_key.pem $SERVER_USERNAME@$SERVER_HOST "sudo mkdir -p /var/www/assets_extractor && sudo chown -R $SERVER_USERNAME:$SERVER_USERNAME /var/www/assets_extractor"
@@ -447,8 +465,8 @@ jobs:
           # Synchronize files to server
           rsync -avz -e "ssh -i ~/.ssh/deploy_key.pem" --delete deployment/ $SERVER_USERNAME@$SERVER_HOST:/var/www/assets_extractor/
           
-          # Execute deployment script
-          ssh -i ~/.ssh/deploy_key.pem $SERVER_USERNAME@$SERVER_HOST "cd /var/www/assets_extractor && sudo bash deploy.sh"
+          # Execute deployment script with domain name parameter
+          ssh -i ~/.ssh/deploy_key.pem $SERVER_USERNAME@$SERVER_HOST "cd /var/www/assets_extractor && sudo API_DOMAIN=\"${API_DOMAIN}\" && sudo CERTBOT_EMAIL=\"${CERTBOT_EMAIL}\" bash deploy.sh"
           
       - name: Clean up SSH key
         run: rm -f ~/.ssh/deploy_key.pem
