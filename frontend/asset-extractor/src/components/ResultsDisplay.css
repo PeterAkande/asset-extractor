@@ -1619,119 +1619,187 @@ svg[width="0px"], svg[height="0px"] {
   color: var(--google-gray-600);
 }
 
+/* Enhanced Mobile Responsiveness */
+@media (max-width: 1200px) {
+  /* Larger tablets and smaller desktops */
+  .color-grid, .font-grid, .image-grid, .video-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 992px) {
+  /* Regular tablets and small laptops */
+  .color-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .font-grid, .image-grid, .video-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
 @media (max-width: 768px) {
   .results-content {
     padding: 24px 16px;
   }
   
+  .tab-buttons {
+    margin: 0 8px;
+    padding-bottom: 4px;
+  }
+  
   .tab-button {
     padding: 16px 12px;
-    font-size: 13px;
+    font-size: 12px;
     min-width: auto;
-    justify-content: center;
+  }
+  
+  .tab-button .material-icons {
+    font-size: 16px;
   }
   
   .tab-count {
-    min-width: 20px;
-    height: 20px;
-    font-size: 11px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
     padding: 0 4px;
   }
   
-  .color-grid, .image-grid, .font-grid {
+  /* Show only ONE card per row on all mobile devices */
+  .color-grid, .font-grid, .image-grid, .video-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  /* Optimize card heights for single-column display */
+  .color-preview {
+    height: 160px;
+    font-size: 18px;
+  }
+  
+  .image-preview, .video-preview {
+    height: 220px;
+  }
+
+  /* Better image/video modal for mobile */
+  .image-modal-overlay, .video-modal-overlay {
+    padding: 0;
+  }
+  
+  .image-modal-content, .video-modal-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    border-radius: 0;
+  }
+  
+  .close-modal-btn {
+    top: 12px;
+    right: 12px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Improved modal actions for touch devices */
+  .modal-actions {
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 8px;
+    padding: 12px;
+    z-index: 1001;
+  }
+  
+  .download-modal-btn, .view-original-btn {
+    flex-grow: 1;
+    padding: 12px 0;
+    margin: 0 4px;
+    font-size: 13px;
+    justify-content: center;
+  }
+  
+  /* Font card improvements for mobile */
+  .font-card {
+    padding: 16px 12px;
+  }
+  
+  .font-name {
+    font-size: 18px;
+  }
+  
+  .font-preview {
+    padding: 12px 8px;
+  }
+  
+  /* Stacked actions for font cards */
+  .font-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* Small mobile devices adjustments */
+@media (max-width: 480px) {
+  .results-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+  }
+
+  /* We already have 1 column from 768px breakpoint, no need to repeat here */
+  /* Just adjust additional styling for smaller screens */
+  
+  .tab-button {
+    padding: 12px 6px;
+    font-size: 11px;
   }
   
   .color-preview {
-    height: 140px;
+    height: 120px;
   }
   
-  .image-preview {
-    height: 200px; /* Adjust height for mobile if needed */
-  }
-  
-  .video-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .video-preview {
-    height: 200px;
-  }
-  
-  .tabs {
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  
-  .tabs::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .tab {
-    padding: 16px;
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-  
-  .tab-content {
-    padding: 24px 16px;
-  }
-  
-  .asset-list {
-    grid-template-columns: 1fr;
-  }
-
-  .font-preview {
+  .color-info {
     padding: 12px;
   }
   
-  .font-sample-text {
-    font-size: 14px;
+  .color-name {
+    font-size: 16px;
   }
   
-  .font-sample-label {
-    font-size: 11px;
-  }
-
-  .video-modal-content.wide-modal {
-    max-width: 100%; /* Full width on mobile */
-    padding: 12px;
-  }
-
-  .close-modal-btn {
-    top: 15px;
-    right: 15px;
-    font-size: 20px;
-    padding: 8px;
-  }
-
-  .modal-actions {
-    bottom: 15px;
-    gap: 10px;
-    padding: 8px 15px;
-  }
-
-  .download-modal-btn, .view-original-btn {
-    padding: 10px 15px;
-    font-size: 14px;
-  }
-
-  .image-modal-content img {
-    max-width: 100%;
-    max-height: 80vh;
+  /* Stack color metrics on small screens */
+  .color-metrics {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
   
-  .image-modal-overlay .close-modal-btn {
-    top: 15px;
-    right: 15px;
-    font-size: 20px;
-    padding: 8px;
+  /* Better touch targets for SVG cards */
+  .image-card, .video-card, .font-card {
+    margin-bottom: 8px;
   }
   
-  .image-modal-overlay .modal-actions {
-    bottom: 15px;
-    padding: 8px 15px;
+  .download-image-btn {
+    padding: 16px 8px;
   }
+  
+  /* Ensure tab content has padding on small screens */
+  .colors-tab, .images-tab, .fonts-tab, .svg-tab {
+    padding: 8px 0;
+  }
+}
+
+/* Fix for mobile iframe issues */
+.modal-video-iframe,
+.modal-video-player {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
 }
 
 /* Force remove any outlines */

@@ -141,3 +141,29 @@
   text-align: center;
   padding: 2rem;
 }
+
+@media (max-width: 992px) {
+  .color-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .color-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .color-section-tabs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .section-tab {
+    margin-bottom: 8px;
+  }
+  
+  .color-metrics {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

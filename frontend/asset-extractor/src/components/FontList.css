@@ -29,6 +29,36 @@
   }
 }
 
+/* Medium sized devices */
+@media (min-width: 481px) and (max-width: 767px) {
+  .fonts-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .font-preview {
+    padding: 16px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fonts-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .font-card {
+    margin-bottom: 16px;
+  }
+  
+  .font-preview {
+    padding: 12px 10px;
+  }
+  
+  .sample-text {
+    font-size: 14px;
+  }
+}
+
 .font-card {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
