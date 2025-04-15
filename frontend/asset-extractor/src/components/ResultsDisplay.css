@@ -1621,6 +1621,9 @@ svg[width="0px"], svg[height="0px"] {
 
 /* Enhanced Mobile Responsiveness */
 @media (max-width: 1200px) {
+  .color-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
   /* Larger tablets and smaller desktops */
   .color-grid, .font-grid, .image-grid, .video-grid {
     grid-template-columns: repeat(3, 1fr);
