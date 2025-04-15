@@ -1,5 +1,6 @@
 from pydantic import BaseModel, HttpUrl, Field
 from typing import List, Dict, Optional, Any, Union
+from datetime import datetime
 
 
 class ColorInfo(BaseModel):
@@ -28,6 +29,7 @@ class FontInfo(BaseModel):
     """Model for font information"""
     name: str = Field(..., description="The name of the font")
     type: str = Field(..., description="The type of font (Google Font, @font-face, inline, etc.)")
+    url: Optional[str] = Field(None, description="The URL of the font if available")
 
 
 class AssetCollection(BaseModel):
@@ -52,6 +54,9 @@ class ExtractorResponse(BaseModel):
     colors: ColorCollection = Field(default_factory=ColorCollection, description="Colors extracted from the page")
     fonts: List[FontInfo] = Field(default_factory=list, description="Fonts extracted from the page")
     assets: AssetCollection = Field(default_factory=AssetCollection, description="Assets extracted from the page")
+    result_id: Optional[str] = Field(None, description="Unique identifier for this extraction result")
+    timestamp: Optional[datetime] = Field(default_factory=datetime.now, description="Time when the extraction was performed")
+    cached: Optional[bool] = Field(False, description="Whether this result was retrieved from cache")
 
 
 class ErrorResponse(BaseModel):
@@ -62,3 +67,18 @@ class ErrorResponse(BaseModel):
 class ExtractorResult(BaseModel):
     """Union model that can represent either a successful response or an error"""
     result: Union[ExtractorResponse, ErrorResponse] = Field(..., description="The extraction result or error")
+
+
+class CachedResultInfo(BaseModel):
+    """Model for cached result information"""
+    id: str = Field(..., description="Unique identifier for the cached result")
+    url: str = Field(..., description="The URL that was extracted")
+    timestamp: Optional[datetime] = Field(None, description="Time when the extraction was performed")
+
+
+class CachedResultsList(BaseModel):
+    """Model for list of cached results"""
+    total: int = Field(..., description="Total number of cached results")
+    limit: int = Field(..., description="Maximum number of results per page")
+    offset: int = Field(..., description="Number of results skipped")
+    results: List[CachedResultInfo] = Field(..., description="List of cached results")
