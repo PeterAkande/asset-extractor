@@ -57,8 +57,9 @@ const ResultsPage = () => {
     <div className="results-page">
       <Navbar onLogoClick={handleLogoClick} />
       
-      <div className="container" style={{ paddingTop: '120px', paddingBottom: '80px' }}>
+      <div className="container" style={{ paddingTop: '120px', paddingBottom: '80px', borderRadius: '8px' }}>
         <div className="results-header">
+            <br></br>
           <h1 className="page-title">Extraction Results</h1>
           {results && (
             <p className="results-subtitle ">
