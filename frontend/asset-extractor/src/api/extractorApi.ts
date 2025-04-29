@@ -76,6 +76,25 @@ export async function extractFromUrl(url: string): Promise<ExtractorResponse> {
   }
 }
 
+/**
+ * Fetch cached results from the API using a result ID
+ */
+export async function fetchCachedResult(resultId: string): Promise<ExtractorResponse> {
+  try {
+    const response = await fetch(`/api/cache/${resultId}`);
+    
+    if (!response.ok) {
+      throw new Error(response.statusText || 'Failed to fetch cached results');
+    }
+    
+    const data = await response.json();
+    return data as ExtractorResponse;
+  } catch (error) {
+    console.error('Error fetching cached results:', error);
+    throw error;
+  }
+}
+
 export function extractFromUrlWithProgress(url: string, onProgress: ProgressCallback): () => void {
   const eventSource = new EventSource(`/api/extract-sse?url=${encodeURIComponent(url)}`);
   

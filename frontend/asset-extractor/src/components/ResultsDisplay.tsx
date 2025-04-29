@@ -536,6 +536,8 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
   const filteredFonts = search && fonts ?
     fonts.filter(font => font.name.toLowerCase().includes(search.toLowerCase())) :
     fonts;
+
+  
   
   return (
     <div className="results-display">

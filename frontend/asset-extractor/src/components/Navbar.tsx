@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Navbar.css';
 
 interface NavbarProps {
@@ -6,46 +7,50 @@ interface NavbarProps {
 }
 
 const Navbar = ({ onLogoClick }: NavbarProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('');
-
+  
+  // Handle scrolling effect
   useEffect(() => {
     const handleScroll = () => {
       const isScrolled = window.scrollY > 20;
       if (isScrolled !== scrolled) {
         setScrolled(isScrolled);
       }
-      
-      // Determine which section is currently in view
-      const sections = ['features', 'testimonials', 'extraction-form'];
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          if (rect.top <= 100 && rect.bottom >= 100) {
-            setActiveSection(section);
-            break;
-          }
-        }
-      }
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrolled]);
-
-  const handleNavLinkClick = (sectionId: string) => {
-    const section = document.getElementById(sectionId);
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
+  
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+  
+  // Prevent body scrolling when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
     setMobileMenuOpen(false);
   };
 
   return (
-    <header className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <div className="container navbar-container">
+    <header className={`navbar ${scrolled ? 'scrolled' : ''} ${mobileMenuOpen ? 'menu-open' : ''}`}>
+      <div className="navbar-container">
         <div className="navbar-logo" onClick={onLogoClick}>
           <div className="logo-mark">
             <span style={{ color: '#4285F4' }}>A</span>
@@ -71,24 +76,27 @@ const Navbar = ({ onLogoClick }: NavbarProps) => {
           <ul className="navbar-nav">
             <li className="nav-item">
               <button 
-                className={`nav-button ${activeSection === 'features' ? 'active' : ''}`}
-                onClick={() => handleNavLinkClick('features')}
+                className={`nav-button ${location.pathname === "/" ? 'active' : ''}`}
+                onClick={() => handleNavigation('/')}
               >
-                <span className="nav-button-icon">✨</span>
-                Features
+                <span className="nav-button-icon">🏠</span>
+                Home
               </button>
             </li>
             <li className="nav-item">
               <button 
-                className={`nav-button ${activeSection === 'testimonials' ? 'active' : ''}`}
-                onClick={() => handleNavLinkClick('testimonials')}
+                className={`nav-button ${location.pathname === "/extract" ? 'active' : ''}`}
+                onClick={() => handleNavigation('/extract')}
               >
-                <span className="nav-button-icon">💬</span>
-                Testimonials
+                <span className="nav-button-icon">🔍</span>
+                Extract
               </button>
             </li>
             <li className="nav-item">
-              <a href="#extraction-form" className="nav-link highlight">Try it free</a>
+              <a href="#" className="nav-link highlight">
+                <span className="nav-button-icon">✨</span>
+                Try Pro
+              </a>
             </li>
           </ul>
         </nav>

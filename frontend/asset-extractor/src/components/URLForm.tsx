@@ -1,16 +1,15 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { extractFromUrlWithProgress, ProgressEvent, ExtractorResponse } from '../api/extractorApi';
-import ExtractionProgress from './ExtractionProgress';
+import { ProgressEvent } from '../api/extractorApi';
 import './URLForm.css';
 
 interface URLFormProps {
   setIsLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  setResults: (results: ExtractorResponse | null) => void;
+  onExtract: (url: string) => void;
   isLoading?: boolean;
 }
 
-const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLFormProps) => {
+const URLForm = ({ setIsLoading, setError, onExtract, isLoading = false }: URLFormProps) => {
   const [url, setUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState<boolean | null>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -35,7 +34,7 @@ const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLF
       new URL(url);
       setIsValidUrl(true);
     } catch (e) {
-      console.log(e)
+      console.log(e);
       setIsValidUrl(false);
     }
   }, [url]);
@@ -52,32 +51,13 @@ const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLF
     try {
       new URL(url);
     } catch (e) {
-      console.log(e)
+      console.log(e);
       setError('Please enter a valid URL with http:// or https://');
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
-    setResults(null);
-    setCurrentProgress(null);
-
-    // Use SSE instead of direct API call
-    const cleanup = extractFromUrlWithProgress(url, (progressEvent) => {
-      console.log('Progress update:', progressEvent);
-      setCurrentProgress(progressEvent);
-      
-      if (progressEvent.event === 'complete') {
-        setResults(progressEvent.result || null);
-        setIsLoading(false);
-      } else if (progressEvent.event === 'error') {
-        setError(progressEvent.message || 'Failed to extract assets');
-        setIsLoading(false);
-      }
-    });
-    
-    // Store cleanup function for component unmount
-    return () => cleanup();
+    // Call the onExtract prop with the URL
+    onExtract(url);
   };
 
   const useExampleUrl = (exampleUrl: string) => {
@@ -132,10 +112,6 @@ const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLF
           </button>
         </div>
         
-        {isLoading && currentProgress && (
-          <ExtractionProgress currentProgress={currentProgress} />
-        )}
-        
         <div className="sample-urls-section">
           <div className="sample-urls-header">
             <div className="sample-divider"></div>
@@ -149,7 +125,6 @@ const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLF
                 key={index}
                 type="button" 
                 className="sample-url-card"
-                // eslint-disable-next-line react-hooks/rules-of-hooks
                 onClick={() => useExampleUrl(sample.url)}
                 disabled={isLoading}
               >
@@ -162,9 +137,9 @@ const URLForm = ({ setIsLoading, setError, setResults, isLoading = false }: URLF
       </form>
       
       <div className="form-decorations">
-        <div className="decoration decoration-1"></div>
-        <div className="decoration decoration-2"></div>
-        <div className="decoration decoration-3"></div>
+        {/* <div className="decoration decoration-1"></div> */}
+        {/* <div className="decoration decoration-2"></div> */}
+        {/* <div className="decoration decoration-3"></div> */}
       </div>
     </div>
   );

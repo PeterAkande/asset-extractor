@@ -1,0 +1,317 @@
+.extract-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%);
+}
+
+/* Enhanced backdrop pattern with multiple layers for depth */
+.extract-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(66, 133, 244, 0.08) 0%, transparent 8%),
+    radial-gradient(circle at 85% 85%, rgba(52, 168, 83, 0.08) 0%, transparent 8%),
+    radial-gradient(circle at 50% 50%, rgba(251, 188, 5, 0.05) 0%, transparent 10%),
+    radial-gradient(circle at 30% 70%, rgba(234, 67, 53, 0.08) 0%, transparent 8%);
+  background-size: 60px 60px, 70px 70px, 120px 120px, 80px 80px;
+  background-position: 0 0;
+  opacity: 0.8;
+  animation: movingDots 60s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Add subtle grid pattern overlay */
+.extract-page::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+  background-size: 30px 30px;
+  opacity: 0.4;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes movingDots {
+  0% { background-position: 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 100px 100px, -100px 100px, 50px -50px, -50px -50px; }
+}
+
+.extract-page .container {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 120px 1.5rem 80px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Improved title with more sophisticated gradient and text shadow */
+.extract-page .page-title {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 800;
+  margin-bottom: 25px;
+  text-align: center;
+  background: linear-gradient(135deg, #202124 0%, #4285F4 70%, #34A853 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.03em;
+  animation: fadeInDown 0.8s ease-out;
+  text-shadow: 0px 5px 15px rgba(0,0,0,0.05);
+  position: relative;
+  line-height: 1.1;
+  max-width: 900px;
+}
+
+/* Add decorative accents around title */
+.extract-page .page-title::before,
+.extract-page .page-title::after {
+  content: '';
+  position: absolute;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(to right, #4285F4, #34A853);
+  bottom: -15px;
+  border-radius: 3px;
+}
+
+.extract-page .page-title::before {
+  left: calc(50% - 70px);
+  transform: rotate(-5deg);
+}
+
+.extract-page .page-title::after {
+  right: calc(50% - 70px);
+  transform: rotate(5deg);
+}
+
+.extract-page .page-subtitle {
+  font-size: clamp(1.125rem, 3vw, 1.35rem);
+  line-height: 1.6;
+  color: var(--google-gray-700);
+  margin: 10px auto 50px;
+  max-width: 700px;
+  text-align: center;
+  animation: fadeIn 1s ease-out;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* Enhanced visual decorations with smoother gradients */
+.extract-decoration {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(50px);
+  z-index: -1;
+  opacity: 0.7;
+  animation: float 8s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.decoration-1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle at center, rgba(66, 133, 244, 0.3), rgba(66, 133, 244, 0));
+  top: 5%;
+  left: -200px;
+  animation-delay: 0s;
+}
+
+.decoration-2 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle at center, rgba(52, 168, 83, 0.25), rgba(52, 168, 83, 0));
+  bottom: 5%;
+  right: -150px;
+  animation-delay: 1s;
+}
+
+.decoration-3 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle at center, rgba(251, 188, 5, 0.2), rgba(251, 188, 5, 0));
+  bottom: 30%;
+  left: 10%;
+  animation-delay: 2s;
+}
+
+.decoration-4 {
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle at center, rgba(234, 67, 53, 0.2), rgba(234, 67, 53, 0));
+  top: 40%;
+  right: 15%;
+  animation-delay: 1.5s;
+}
+
+.extract-form-section {
+  position: relative;
+  animation: fadeInUp 0.8s ease-out 0.2s;
+  animation-fill-mode: both;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 5px 25px rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(66, 133, 244, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-standard);
+  border: 1px solid rgba(66, 133, 244, 0.15);
+}
+
+.error-container {
+  background-color: rgba(234, 67, 53, 0.05);
+  border-left: 4px solid var(--google-red);
+  padding: 1.5rem;
+  margin: 1.8rem auto;
+  border-radius: 12px;
+  max-width: 700px;
+  box-shadow: 0 5px 15px rgba(234, 67, 53, 0.07);
+  animation: slideIn 0.5s ease-out;
+  border: 1px solid rgba(234, 67, 53, 0.15);
+}
+
+.error-message {
+  color: var(--google-red);
+  margin: 0;
+  font-weight: 500;
+  font-size: 1.05rem;
+}
+
+/* Beautiful badge with enhanced gradient and glow effect */
+.extract-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(66, 133, 244, 0.15), rgba(52, 168, 83, 0.15));
+  color: #1a73e8;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 auto 32px;
+  border: 1px solid rgba(66, 133, 244, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 0 5px 15px rgba(66, 133, 244, 0.1);
+  position: relative;
+  text-align: center;
+  justify-content: center;
+  max-width: max-content;
+  animation: fadeInDown 0.7s ease-out, glowPulse 3s infinite alternate;
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 5px 15px rgba(66, 133, 244, 0.1); }
+  100% { box-shadow: 0 8px 25px rgba(66, 133, 244, 0.2), 0 0 5px rgba(66, 133, 244, 0.1); }
+}
+
+.badge-icon {
+  font-size: 1.25rem;
+  background: linear-gradient(135deg, #4285F4, #34A853);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive adjustments with smoother transitions */
+@media (max-width: 768px) {
+  .extract-page .container {
+    padding-top: 100px;
+    padding-bottom: 60px;
+  }
+  
+  .extract-page .page-title {
+    font-size: clamp(2rem, 8vw, 2.5rem);
+    margin-bottom: 1.8rem;
+  }
+  
+  .extract-page .page-title::before,
+  .extract-page .page-title::after {
+    width: 40px;
+    bottom: -12px;
+  }
+  
+  .extract-page .page-title::before {
+    left: calc(50% - 50px);
+  }
+  
+  .extract-page .page-title::after {
+    right: calc(50% - 50px);
+  }
+  
+  .extract-page .page-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 35px;
+  }
+  
+  .decoration-1,
+  .decoration-2,
+  .decoration-3,
+  .decoration-4 {
+    opacity: 0.3;
+    filter: blur(70px);
+  }
+  
+  .extract-badge {
