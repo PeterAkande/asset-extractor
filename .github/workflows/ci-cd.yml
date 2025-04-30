@@ -53,7 +53,7 @@ jobs:
           
       - name: Install frontend dependencies
         working-directory: ./frontend/asset-extractor
-        run: npm ci
+        run: npm ci --legacy-peer-deps
         
       - name: Build frontend
         working-directory: ./frontend/asset-extractor
@@ -83,7 +83,7 @@ jobs:
       - name: Build frontend for production
         working-directory: ./frontend/asset-extractor
         run: |
-          npm ci
+          npm ci --legacy-peer-deps
           npm run build
           
       # Prepare deployment package with proper verification
