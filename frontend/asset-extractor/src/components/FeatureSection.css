@@ -173,7 +173,8 @@
 /* Improve highlight section visibility */
 .features-highlight {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  /* Change grid template columns to give more space to the video (from 1.2fr 1fr to 1fr 1.3fr) */
+  grid-template-columns: 1fr 1.3fr;
   gap: 64px;
   align-items: center;
   background: linear-gradient(to right, rgba(66, 133, 244, 0.06), rgba(52, 168, 83, 0.06));
@@ -254,6 +255,8 @@
 
 .highlight-image {
   position: relative;
+  /* Add max-width to ensure the video can grow */
+  max-width: 100%;
 }
 
 .image-card {
@@ -263,6 +266,8 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   transform: perspective(1000px) rotateY(-5deg);
   transition: all 0.5s;
+  /* Increase the size of the video container */
+  width: 100%;
 }
 
 .features-highlight:hover .image-card {
@@ -277,6 +282,22 @@
 }
 
 .features-highlight:hover .image-card img {
+  transform: scale(1.05);
+}
+
+/* Add video styling */
+.feature-video {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 16px;
+  transition: transform 0.5s;
+  /* Add minimum height to ensure video has good dimensions */
+  min-height: 300px;
+  object-fit: cover;
+}
+
+.features-highlight:hover .feature-video {
   transform: scale(1.05);
 }
 
@@ -333,6 +354,8 @@
   .features-highlight {
     padding: 40px;
     gap: 40px;
+    /* Keep columns balanced at this breakpoint */
+    grid-template-columns: 1fr 1.2fr;
   }
   
   .highlight-content h2 {
@@ -361,8 +384,14 @@
   
   .image-card {
     transform: none;
-    max-width: 500px;
+    /* Increase max-width for larger appearance on mobile */
+    max-width: 600px;
     margin: 0 auto;
+  }
+  
+  .feature-video {
+    /* Keep minimum height on smaller screens */
+    min-height: 250px;
   }
 }
 

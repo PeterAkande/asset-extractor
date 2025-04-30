@@ -20,7 +20,7 @@ const HomePage = () => {
     <div className="home-page">
       <Navbar onLogoClick={handleLogoClick} />
       <HeroSection onGetStarted={handleGetStarted} />
-      <FeatureSection />
+      <FeatureSection onStartExtracting={handleGetStarted} />
       <TestimonialSection />
       <Footer />
     </div>

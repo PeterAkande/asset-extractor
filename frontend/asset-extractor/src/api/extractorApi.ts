@@ -1,3 +1,5 @@
+import toast from 'react-hot-toast';
+
 export interface ColorInfo {
   name: string;
   hex: string;
@@ -68,12 +70,17 @@ export async function extractFromUrl(url: string): Promise<ExtractorResponse> {
     console.log('Response received:', data);
 
     if (!response.ok) {
-      throw new Error(data.detail || data.error || 'Failed to extract assets');
+      const errorMessage = data.detail || data.error || 'Failed to extract assets';
+      toast.error(`Extraction Error: ${errorMessage} (Code: ${response.status})`);
+      throw new Error(errorMessage);
     }
 
     return data as ExtractorResponse;
   } catch (error) {
     console.error('Error extracting assets:', error);
+    if (error instanceof Error) {
+      toast.error(`Extraction Error: ${error.message}`);
+    }
     throw error;
   }
 }
@@ -86,13 +93,18 @@ export async function fetchCachedResult(resultId: string): Promise<ExtractorResp
     const response = await fetch(`/api/cache/${resultId}`);
     
     if (!response.ok) {
-      throw new Error(response.statusText || 'Failed to fetch cached results');
+      const errorMessage = response.statusText || 'Failed to fetch cached results';
+      toast.error(`Error: ${errorMessage} (Code: ${response.status})`);
+      throw new Error(errorMessage);
     }
     
     const data = await response.json();
     return data as ExtractorResponse;
   } catch (error) {
     console.error('Error fetching cached results:', error);
+    if (error instanceof Error) {
+      toast.error(`Error: ${error.message}`);
+    }
     throw error;
   }
 }
@@ -105,20 +117,28 @@ export function extractFromUrlWithProgress(url: string, onProgress: ProgressCall
       const data = JSON.parse(event.data);
       onProgress(data);
       
+      // Show error toast if the event indicates an error
+      if (data.event === 'error') {
+        toast.error(`Extraction Error: ${data.message || 'Unknown error'}`);
+      }
+      
       // Close the EventSource when we're done
       if (data.event === 'complete' || data.event === 'error' || data.event === 'cancelled' || data.event === 'end') {
         eventSource.close();
       }
     } catch (error) {
       console.error('Error parsing SSE event:', error);
+      toast.error('Error: Failed to parse server response');
     }
   };
   
   eventSource.onerror = () => {
+    const errorMessage = 'Connection to the server was lost. Please try again.';
     onProgress({
       event: 'error',
-      message: 'Connection to the server was lost. Please try again.'
+      message: errorMessage
     });
+    toast.error(`Error: ${errorMessage}`);
     eventSource.close();
   };
   
@@ -249,27 +269,3 @@ export const downloadSvg = (svgDataUri: string, filename: string = 'icon.svg'): 
     console.error('Error downloading SVG:', error);
   }
 };
-
-// /**
-//  * Downloads an SVG as a file
-//  */
-// export const downloadSvg = (svgContent: string, filename: string = 'icon.svg'): void => {
-//   try {
-//     // Create a blob from the SVG content
-//     const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-//     const url = URL.createObjectURL(blob);
-    
-//     // Create a link element and trigger download
-//     const a = document.createElement('a');
-//     a.href = url;
-//     a.download = filename;
-//     document.body.appendChild(a);
-//     a.click();
-    
-//     // Clean up
-//     document.body.removeChild(a);
-//     URL.revokeObjectURL(url);
-//   } catch (error) {
-//     console.error('Error downloading SVG:', error);
-//   }
-// };

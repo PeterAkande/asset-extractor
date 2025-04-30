@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react';
 import './FeatureSection.css';
 
-const FeatureSection = () => {
+interface FeatureSectionProps {
+  onStartExtracting?: () => void;
+}
+
+const FeatureSection = ({ onStartExtracting }: FeatureSectionProps) => {
   const sectionRef = useRef<HTMLElement>(null);
   
   useEffect(() => {
@@ -134,14 +138,28 @@ const FeatureSection = () => {
                 <span>Simple, fast and accurate results</span>
               </li>
             </ul>
-            <button className="primary-button">
+            <button 
+              className="primary-button"
+              onClick={onStartExtracting} 
+              aria-label="Start extracting assets now"
+            >
               Start Extracting Now
               <span className="material-icons">arrow_forward</span>
             </button>
           </div>
           <div className="highlight-image">
             <div className="image-card">
-              <img src="https://placehold.co/600x400/f1f3f4/5f6368?text=Feature+Preview" alt="AssetX in action" />
+              <video 
+                className="feature-video" 
+                autoPlay 
+                muted 
+                loop 
+                playsInline
+                src="https://d11di5ixegvag7.cloudfront.net/AssetX.mp4" 
+                aria-label="AssetX in action"
+              >
+                Your browser does not support the video tag.
+              </video>
               <div className="image-card-pattern"></div>
             </div>
             <div className="image-card-glow"></div>

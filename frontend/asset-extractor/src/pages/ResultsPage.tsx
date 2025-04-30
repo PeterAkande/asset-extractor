@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar';
 import ResultsDisplay from '../components/ResultsDisplay';
 import Footer from '../components/Footer';
 import { ExtractorResponse, fetchCachedResult } from '../api/extractorApi';
-import './ResultsPage.css'; // Import the new CSS file
+import './ResultsPage.css';
 
 const ResultsPage = () => {
   const navigate = useNavigate();
@@ -30,7 +32,8 @@ const ResultsPage = () => {
         setResults(data);
         setLoading(false);
       } catch (err) {
-        setError('Failed to load results. The extraction may have expired or been removed.');
+        const errorMessage = 'Failed to load results. The extraction may have expired or been removed.';
+        setError(errorMessage);
         console.error('Error fetching results:', err);
         setLoading(false);
       }
@@ -54,8 +57,64 @@ const ResultsPage = () => {
     navigate('/extract');
   };
 
+  // Helper function to ensure URLs are absolute
+  const getAbsoluteUrl = (url: string): string => {
+    try {
+      return new URL(url).href; // This will throw an error if url is relative
+    } catch (e) {
+      // If it's a relative URL, make it absolute relative to the extracted site
+      if (results?.url) {
+        try {
+          return new URL(url, results.url).href;
+        } catch (e) {
+          return url; // Return original if we can't parse it
+        }
+      }
+      return url;
+    }
+  };
+
+  // Get the best image for Open Graph
+  const getOpenGraphImage = () => {
+    if (!results) return '';
+    
+    // Check if we have any images in the results
+    if (results.assets.images && results.assets.images.length > 0) {
+      return getAbsoluteUrl(results.assets.images[0]); // Return the first image
+    }
+    
+    // If no regular images, try icons
+    if (results.assets.icons && results.assets.icons.length > 0) {
+      return getAbsoluteUrl(results.assets.icons[0]);
+    }
+    
+    return ''; // No images available
+  };
+
   return (
     <div className="results-page">
+      {/* Dynamic meta tags */}
+      {results && (
+        <Helmet>
+          <title>Assets Extracted from {results.url}</title>
+          <meta name="description" content={`Web assets extracted from ${results.url} - colors, fonts, images and more`} />
+          
+          {/* Open Graph / Facebook */}
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content={window.location.href} />
+          <meta property="og:title" content={`Assets Extracted from ${results.url}`} />
+          <meta property="og:description" content={`Web assets extracted from ${results.url} - colors, fonts, images and more`} />
+          {getOpenGraphImage() && <meta property="og:image" content={getOpenGraphImage()} />}
+          
+          {/* Twitter */}
+          <meta property="twitter:card" content="summary_large_image" />
+          <meta property="twitter:url" content={window.location.href} />
+          <meta property="twitter:title" content={`Assets Extracted from ${results.url}`} />
+          <meta property="twitter:description" content={`Web assets extracted from ${results.url} - colors, fonts, images and more`} />
+          {getOpenGraphImage() && <meta property="twitter:image" content={getOpenGraphImage()} />}
+        </Helmet>
+      )}
+
       <Navbar onLogoClick={handleLogoClick} />
       
       <div className="container" style={{ paddingTop: '120px', paddingBottom: '80px', borderRadius: '8px' }}>
