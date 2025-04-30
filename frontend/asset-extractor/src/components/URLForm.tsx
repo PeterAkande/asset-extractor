@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { ProgressEvent } from '../api/extractorApi';
+// import { ProgressEvent } from '../api/extractorApi';
 import './URLForm.css';
 
 interface URLFormProps {
@@ -9,11 +9,11 @@ interface URLFormProps {
   isLoading?: boolean;
 }
 
-const URLForm = ({ setIsLoading, setError, onExtract, isLoading = false }: URLFormProps) => {
+const URLForm = ({  setError, onExtract, isLoading = false }: URLFormProps) => {
   const [url, setUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState<boolean | null>(null);
   const [isFocused, setIsFocused] = useState(false);
-  const [currentProgress, setCurrentProgress] = useState<ProgressEvent | null>(null);
+  // const [currentProgress, setCurrentProgress] = useState<ProgressEvent | null>(null);
   
   // Sample URLs for quick testing
   const sampleUrls = [
