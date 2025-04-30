@@ -31,6 +31,7 @@ export interface ExtractorResponse {
   colors: ColorCollection;
   fonts: FontInfo[];
   assets: AssetCollection;
+  result_id?: string;
 }
 
 export interface ErrorResponse {
@@ -44,6 +45,7 @@ export interface ProgressEvent {
   message?: string;
   result?: ExtractorResponse;
   url?: string;
+ 
 }
 
 export type ProgressCallback = (progressEvent: ProgressEvent) => void;
