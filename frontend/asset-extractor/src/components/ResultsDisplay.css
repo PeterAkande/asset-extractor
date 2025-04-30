@@ -10,17 +10,29 @@
   outline: none;
 }
 
-/* Redesigned tab navigation - Zenefits inspired */
+/* Redesigned tab navigation with sticky behavior */
 .results-header {
   background: white;
   border-bottom: none;
   padding: 0;
-  /* margin-top: 10px !important; */
   position: sticky;
-  top: 0;
-  z-index: 10;
+  top: 70px; /* Match exact navbar height */
+  z-index: 99; /* Lower than navbar z-index of 1000 */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   outline: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: top 0.3s ease; /* Add smooth transition when navbar height changes */
+}
+
+/* Create a container div for the title section */
+.results-title-section {
+  padding: 16px 20px;
+  background: white;
+  position: sticky;
+  top: 0;
+  z-index: 98; /* Lower than tab navigation */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .tab-buttons {
@@ -206,7 +218,7 @@
 }
 
 .results-content {
-  padding: 40px;
+  padding: 40px 20px; /* Adjust padding to match header margin */
   animation: fadeIn 0.5s ease;
   min-height: 50vh;
   border: none !important;
@@ -1747,6 +1759,15 @@ svg[width="0px"], svg[height="0px"] {
   .font-actions {
     flex-direction: column;
     gap: 8px;
+  }
+
+  .results-header {
+    top: 60px; /* Adjust for smaller mobile navbar */
+  }
+  
+  /* Fix for dynamic navbar height changes */
+  .navbar.scrolled ~ .container .results-header {
+    top: 60px; /* Match navbar scrolled height */
   }
 }
 

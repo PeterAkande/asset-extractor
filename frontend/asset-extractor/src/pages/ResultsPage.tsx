@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import ResultsDisplay from '../components/ResultsDisplay';
 import Footer from '../components/Footer';
 import { ExtractorResponse, fetchCachedResult } from '../api/extractorApi';
+import './ResultsPage.css'; // Import the new CSS file
 
 const ResultsPage = () => {
   const navigate = useNavigate();
@@ -57,18 +58,7 @@ const ResultsPage = () => {
     <div className="results-page">
       <Navbar onLogoClick={handleLogoClick} />
       
-      <div className="container" style={{ paddingTop: '120px', paddingBottom: '80px', borderRadius: '8px' }}>
-        <div className="results-header">
-            <br></br>
-          <h1 className="page-title">Extraction Results</h1>
-          {results && (
-            <p className="results-subtitle ">
-              Assets extracted from <strong>{results.url}</strong>
-              {/* {results.cached && <span className="cached-badge">Cached Result</span>} */}
-            </p>
-          )}
-        </div>
-        
+      <div className="container" style={{ paddingTop: '120px', paddingBottom: '80px' }}>
         {loading ? (
           <div className="loading-container">
             <div className="spinner"></div>
@@ -84,6 +74,13 @@ const ResultsPage = () => {
           </div>
         ) : results ? (
           <div className="results-container">
+            <div className="results-title-section">
+              <h1 className="page-title">Extraction Results</h1>
+              <p className="results-subtitle">
+                Assets extracted from <strong>{results.url}</strong>
+              </p>
+            </div>
+            
             <ResultsDisplay results={results} />
             
             <div className="back-button-container" style={{ marginTop: '2rem', textAlign: 'center' }}>
