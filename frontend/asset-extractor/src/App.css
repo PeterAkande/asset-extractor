@@ -408,7 +408,117 @@ button:active {
   overflow: hidden;
 }
 
-/* Media queries with improved breakpoints */
+/* Global layout and spacing */
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
+
+main {
+  flex: 1;
+  width: 100%;
+  padding-top: 70px; /* Account for fixed navigation */
+}
+
+/* Page layouts */
+.page {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+/* Consistent spacing for page sections */
+.page-section {
+  padding: 60px 0;
+}
+
+.page-section-sm {
+  padding: 30px 0;
+}
+
+/* Additional utility classes for spacing in production */
+.p-0 {
+  padding: 0 !important;
+}
+
+.p-1 {
+  padding: 0.25rem !important;
+}
+
+.p-2 {
+  padding: 0.5rem !important;
+}
+
+.p-3 {
+  padding: 1rem !important;
+}
+
+.p-4 {
+  padding: 1.5rem !important;
+}
+
+.p-5 {
+  padding: 3rem !important;
+}
+
+.px-0 {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.px-3 {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+.py-3 {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+
+.py-5 {
+  padding-top: 3rem !important;
+  padding-bottom: 3rem !important;
+}
+
+/* Make sure no browser default margins override our styles */
+body, html {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: #0f172a;
+    --card-background: #1e293b;
+    --text-color: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --border-color: #334155;
+  }
+  
+  body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+  }
+  
+  .extraction-section {
+    background-color: #1a2234;
+  }
+  
+  .secondary-button {
+    background-color: var(--card-background);
+    border-color: var(--primary-color);
+  }
+  
+  .secondary-button:hover {
+    background-color: #283548;
+  }
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
   section {
     padding: var(--spacing-2xl) 0;
@@ -459,8 +569,17 @@ button:active {
   .container {
     padding: 0 var(--spacing-md);
   }
+  
+  .page-section {
+    padding: 40px 0;
+  }
+  
+  .page-section-sm {
+    padding: 20px 0;
+  }
 }
 
+/* Fix for extra space at the top in mobile view */
 @media (max-width: 480px) {
   .results-header-content {
     padding: 8px 0;
@@ -471,27 +590,8 @@ button:active {
     align-items: center;
     flex-wrap: wrap;
   }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background-color: #0f172a;
-    --card-background: #1e293b;
-    --text-color: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --border-color: #334155;
-  }
   
-  .extraction-section {
-    background-color: #1a2234;
-  }
-  
-  .secondary-button {
-    background-color: var(--card-background);
-    border-color: var(--primary-color);
-  }
-  
-  .secondary-button:hover {
-    background-color: #283548;
+  main {
+    padding-top: 60px; /* Account for smaller navbar on mobile */
   }
 }
