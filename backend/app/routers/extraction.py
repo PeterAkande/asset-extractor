@@ -46,15 +46,15 @@ async def api_index():
 
     return {
         "status": "ok",
-        "version": "1.0",
-        "redis_available": redis_available,
-        "endpoints": {
-            "extract": "/api/extract",
-            "stream": "/api/extract-sse",
-            "cache": "/api/cache",
-            "cache_by_id": "/api/cache/{result_id}",
-        },
-        "documentation": "/docs",
+        "version": "1.0.0",
+        # "redis_available": redis_available,
+        # "endpoints": {
+        #     "extract": "/api/extract",
+        #     "stream": "/api/extract-sse",
+        #     "cache": "/api/cache",
+        #     "cache_by_id": "/api/cache/{result_id}",
+        # },
+        # "documentation": "/docs",
     }
 
 

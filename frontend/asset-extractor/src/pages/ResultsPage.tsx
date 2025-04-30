@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar';
 import ResultsDisplay from '../components/ResultsDisplay';
 import Footer from '../components/Footer';
