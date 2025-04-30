@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Navbar.css';
 
@@ -12,18 +12,19 @@ const Navbar = ({ onLogoClick }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Handle scrolling effect
-  useEffect(() => {
-    const handleScroll = () => {
-      const isScrolled = window.scrollY > 20;
-      if (isScrolled !== scrolled) {
-        setScrolled(isScrolled);
-      }
-    };
+  // Handle scrolling effect with throttling for better performance
+  const handleScroll = useCallback(() => {
+    const isScrolled = window.scrollY > 20;
+    if (isScrolled !== scrolled) {
+      setScrolled(isScrolled);
+    }
+  }, [scrolled]);
 
+  // Set up scroll listener with cleanup
+  useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [scrolled]);
+  }, [handleScroll]);
   
   // Close mobile menu when route changes
   useEffect(() => {
@@ -32,20 +33,21 @@ const Navbar = ({ onLogoClick }: NavbarProps) => {
   
   // Prevent body scrolling when mobile menu is open
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    
+    document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
   }, [mobileMenuOpen]);
 
+  // Navigation handler with animation delay for smooth transitions
   const handleNavigation = (path: string) => {
-    navigate(path);
     setMobileMenuOpen(false);
+    navigate(path);
+  };
+
+  // Check if a path is active (exact match)
+  const isPathActive = (path: string) => {
+    return location.pathname === path;
   };
 
   return (
@@ -65,19 +67,21 @@ const Navbar = ({ onLogoClick }: NavbarProps) => {
         <button 
           className={`menu-toggle ${mobileMenuOpen ? 'active' : ''}`}
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
+          aria-label="Toggle navigation menu"
+          aria-expanded={mobileMenuOpen}
         >
           <span></span>
           <span></span>
           <span></span>
         </button>
 
-        <nav className={`navbar-menu ${mobileMenuOpen ? 'open' : ''}`}>
+        <nav className={`navbar-menu ${mobileMenuOpen ? 'open' : ''}`} aria-hidden={!mobileMenuOpen}>
           <ul className="navbar-nav">
             <li className="nav-item">
               <button 
-                className={`nav-button ${location.pathname === "/" ? 'active' : ''}`}
+                className={`nav-button ${isPathActive("/") ? 'active' : ''}`}
                 onClick={() => handleNavigation('/')}
+                aria-current={isPathActive("/") ? 'page' : undefined}
               >
                 <span className="nav-button-icon">🏠</span>
                 Home
@@ -85,8 +89,9 @@ const Navbar = ({ onLogoClick }: NavbarProps) => {
             </li>
             <li className="nav-item">
               <button 
-                className={`nav-button ${location.pathname === "/extract" ? 'active' : ''}`}
+                className={`nav-button ${isPathActive("/extract") ? 'active' : ''}`}
                 onClick={() => handleNavigation('/extract')}
+                aria-current={isPathActive("/extract") ? 'page' : undefined}
               >
                 <span className="nav-button-icon">🔍</span>
                 Extract

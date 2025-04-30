@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   height: 70px;
-  background-color: rgba(255, 255, 255, 0.98);
+  background-color: rgba(255, 255, 255, 0.95);
   z-index: 1000;
   transition: all 0.3s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -43,10 +43,6 @@
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #4285F4, #0F9D58);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .navbar-menu {
@@ -63,11 +59,12 @@
 }
 
 .nav-item {
-  margin-left: 16px;
+  margin-left: 8px;
+  position: relative;
 }
 
-/* Enhanced nav buttons with glass effect */
-.nav-button {
+/* Refined nav buttons with better hover effects */
+.nav-button, .nav-link {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -80,6 +77,27 @@
   font-size: 0.9375rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-decoration: none;
+  position: relative;
+}
+
+/* Add indicator line on hover and active */
+.nav-button::after, .nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: var(--google-blue);
+  transition: width 0.3s ease;
+  border-radius: 2px;
+}
+
+.nav-button:hover::after, .nav-link:hover::after,
+.nav-button.active::after {
+  width: 80%; /* Increased from 60% for better visibility */
 }
 
 .nav-button-icon {
@@ -87,9 +105,10 @@
   transition: transform 0.3s ease;
 }
 
-.nav-button:hover {
-  background-color: rgba(66, 133, 244, 0.1);
+.nav-button:hover, .nav-link:hover {
   color: var(--google-blue);
+  background-color: rgba(66, 133, 244, 0.08); /* Add subtle background on hover */
+  transform: translateY(-1px); /* Slight lift effect */
 }
 
 .nav-button:hover .nav-button-icon {
@@ -97,12 +116,12 @@
 }
 
 .nav-button.active {
-  background-color: var(--google-blue-light);
   color: var(--google-blue);
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(66, 133, 244, 0.2);
+  background-color: rgba(66, 133, 244, 0.12); /* Slightly stronger background for active state */
 }
 
+/* Updated highlight button styles for consistency */
 .nav-link.highlight {
   color: white;
   background: linear-gradient(135deg, #4285F4, #0F9D58);
@@ -111,12 +130,12 @@
   border-radius: 20px;
   box-shadow: 0 3px 8px rgba(66, 133, 244, 0.3);
   transition: all 0.2s ease;
-  text-decoration: none;
 }
 
 .nav-link.highlight:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(66, 133, 244, 0.4);
+  background: linear-gradient(135deg, #3367D6, #0F8C4F); /* Slightly darker gradient on hover */
 }
 
 .menu-toggle {
@@ -140,7 +159,7 @@
   border-radius: 2px;
 }
 
-/* Mobile menu animation */
+/* Enhanced mobile menu animation */
 .menu-toggle.active span:nth-child(1) {
   transform: translateY(8px) rotate(45deg);
   background-color: var(--google-blue);
@@ -155,7 +174,7 @@
   background-color: var(--google-blue);
 }
 
-/* Mobile navbar styles */
+/* Improved mobile navbar styles */
 @media (max-width: 768px) {
   .menu-toggle {
     display: flex;
@@ -190,7 +209,7 @@
   }
 
   .nav-item {
-    margin: 8px 0;
+    margin: 0;
     width: 100%;
   }
 
@@ -200,9 +219,9 @@
     font-size: 1.125rem;
     padding: 12px 16px;
   }
-  
-  .nav-button {
-    border-radius: 12px;
+
+  .nav-button::after, .nav-link::after {
+    bottom: 4px;
   }
   
   .nav-link.highlight {
@@ -210,7 +229,7 @@
   }
   
   /* Add a dim overlay when mobile menu is open */
-  .navbar.menu-open::after {
+  .navbar.menu-open::before {
     content: '';
     position: fixed;
     top: 0;
