@@ -58,7 +58,7 @@ const ResultsPage = () => {
     <div className="results-page">
       <Navbar onLogoClick={handleLogoClick} />
       
-      <div className="container" style={{ paddingTop: '120px', paddingBottom: '80px' }}>
+      <div className="container" style={{ paddingTop: '120px', paddingBottom: '80px', borderRadius: '8px' }}>
         {loading ? (
           <div className="loading-container">
             <div className="spinner"></div>
@@ -82,12 +82,6 @@ const ResultsPage = () => {
             </div>
             
             <ResultsDisplay results={results} />
-            
-            <div className="back-button-container" style={{ marginTop: '2rem', textAlign: 'center' }}>
-              <button className="secondary-button" onClick={handleExtractAnother}>
-                Extract Another Website
-              </button>
-            </div>
           </div>
         ) : (
           <div className="error-container">
@@ -99,6 +93,14 @@ const ResultsPage = () => {
           </div>
         )}
       </div>
+      
+      {/* Floating Extract Another Button */}
+      {results && !loading && (
+        <button className="floating-extract-button" onClick={handleExtractAnother}>
+          <span className="material-icons">add</span>
+          Extract Another Website
+        </button>
+      )}
       
       <Footer />
     </div>
