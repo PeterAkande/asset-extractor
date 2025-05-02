@@ -110,7 +110,7 @@ export async function fetchCachedResult(resultId: string): Promise<ExtractorResp
 }
 
 export function extractFromUrlWithProgress(url: string, onProgress: ProgressCallback): () => void {
-  const eventSource = new EventSource(`/api/extract-sse?url=${encodeURIComponent(url)}`);
+  const eventSource = new EventSource(`/api/extract/sse?url=${encodeURIComponent(url)}`);
   
   eventSource.onmessage = (event) => {
     try {

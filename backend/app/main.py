@@ -42,7 +42,7 @@ async def root():
         "endpoints": {
             "api_index": "/api",
             "extract_assets": "/api/extract",
-            "stream_extraction": "/api/extract-sse",
+            "stream_extraction": "/api/extract/sse",
         },
     }
 
@@ -50,4 +50,4 @@ async def root():
 @app.on_event("startup")
 async def startup_event():
     logger.info("Asset Extractor API started")
-    logger.info("Available endpoints: /, /api, /api/extract, /api/extract-sse, /docs")
+    logger.info("Available endpoints: /, /api, /api/extract, /api/extract/sse, /docs")

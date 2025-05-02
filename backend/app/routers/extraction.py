@@ -14,7 +14,7 @@ from ..utils.redis_client import (
     ping_redis,
 )
 import validators
-from ..models import (
+from ..models.models import (
     ExtractorResponse,
     ErrorResponse,
     ExtractorResult,
@@ -47,14 +47,14 @@ async def api_index():
     return {
         "status": "ok",
         "version": "1.0.0",
-        # "redis_available": redis_available,
-        # "endpoints": {
-        #     "extract": "/api/extract",
-        #     "stream": "/api/extract-sse",
-        #     "cache": "/api/cache",
-        #     "cache_by_id": "/api/cache/{result_id}",
-        # },
-        # "documentation": "/docs",
+        "redis_available": redis_available,
+        "endpoints": {
+            "extract": "/api/extract",
+            "stream": "/api/extract/sse",
+            "cache": "/api/cache",
+            "cache_by_id": "/api/cache/{result_id}",
+        },
+        "documentation": "/docs",
     }
 
 
@@ -126,7 +126,7 @@ async def extract_assets(request: URLRequest):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 
-@router.get("/extract-sse")
+@router.get("/extract/sse")
 async def extract_assets_sse(
     request: Request,
     url: str = Query(..., description="URL to extract assets from"),
@@ -251,6 +251,7 @@ async def stream_extraction(url):
         )
 
         # Stream progress updates
+        # Todo: Use broadcast and redis pub/sub for real-time updates
         while True:
             # Check if extraction is complete
             if extraction_task.done():

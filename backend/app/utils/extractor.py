@@ -20,6 +20,8 @@ import base64
 from typing import Optional, Callable, Dict, Any
 import html
 
+from app.models.models import ProgressStage
+
 # Suppress cssutils log messages
 cssutils.log.setLevel(logging.CRITICAL)
 
@@ -58,11 +60,11 @@ class WebAssetExtractor:
         if self.progress_callback:
             if data is None:
                 data = {}
-            self.progress_callback(stage, data)
+            self.progress_callback(stage.__str__(), data)
 
     async def fetch_page(self):
         """Fetch the webpage content using Playwright to handle JavaScript rendering"""
-        self._send_progress("fetching_page", {"url": self.url})
+        self._send_progress(ProgressStage.FETCHING_PAGE, {"url": self.url})
 
         try:
             async with async_playwright() as p:
@@ -94,7 +96,7 @@ class WebAssetExtractor:
                             # Send progress update for important resources
                             if resource_type in ["image", "media", "stylesheet"]:
                                 self._send_progress(
-                                    "resource_loaded",
+                                    ProgressStage.RESOURCE_LOADED,
                                     {"type": resource_type, "url": url},
                                 )
 
@@ -102,14 +104,16 @@ class WebAssetExtractor:
 
                 # Try multiple page load strategies if one fails
                 try:
-                    # First attempt with networkidle and a reasonable timeout
-                    self._send_progress("loading_page", {"strategy": "networkidle"})
+                    # First attempt with networkidle
+                    self._send_progress(
+                        ProgressStage.LOADING_PAGE, {"strategy": "networkidle"}
+                    )
                     await page.goto(self.url, wait_until="networkidle", timeout=45000)
                 except PlaywrightTimeoutError:
                     traceback.print_exc()
                     # Fallback to domcontentloaded which is less strict
                     self._send_progress(
-                        "loading_page",
+                        ProgressStage.LOADING_PAGE,
                         {
                             "strategy": "domcontentloaded",
                             "note": "networkidle timed out",
@@ -126,25 +130,31 @@ class WebAssetExtractor:
                         traceback.print_exc()
                         # Last resort: just load and wait a fixed time
                         self._send_progress(
-                            "loading_page",
+                            ProgressStage.LOADING_PAGE,
                             {"strategy": "load", "note": "domcontentloaded timed out"},
                         )
                         await page.goto(self.url, wait_until="load", timeout=20000)
                         await page.wait_for_timeout(3000)
 
                 # Wait a bit more to ensure dynamic content is loaded
-                self._send_progress("page_loaded", {"waiting_for_content": True})
+                self._send_progress(
+                    ProgressStage.PAGE_LOADED,
+                    {"waiting_for_content": True},
+                )
                 await page.wait_for_timeout(2000)
 
                 # Get the page content after JavaScript execution
                 self.content = await page.content()
                 self.soup = BeautifulSoup(self.content, "lxml")
                 self._send_progress(
-                    "parsing_content", {"content_length": len(self.content)}
+                    ProgressStage.PARSING_CONTENT,
+                    {
+                        "content_length": len(self.content),
+                    },
                 )
 
                 # Execute some JavaScript to find hidden resources
-                self._send_progress("extracting_js_resources", {})
+                self._send_progress(ProgressStage.EXTRACTING_JS_RESOURCES, {})
                 resources_from_js = await page.evaluate(
                     """() => {
                     // Look for React props that might contain media URLs
@@ -221,19 +231,23 @@ class WebAssetExtractor:
 
                 # Close the browser
                 await browser.close()
-                self._send_progress("page_fetch_complete", {"status": "success"})
+                self._send_progress(
+                    ProgressStage.PAGE_FETCH_COMPLETE, {"status": "success"}
+                )
                 return True
 
         except Exception as e:
             traceback.print_exc()
 
             error_message = str(e)
-            self._send_progress("page_fetch_error", {"error": error_message})
+            self._send_progress(
+                ProgressStage.PAGE_FETCH_ERROR, {"error": error_message}
+            )
             print(f"Error fetching page with Playwright: {error_message}")
 
             # Fallback to simple httpx request
             try:
-                self._send_progress("fallback_request", {"method": "httpx"})
+                self._send_progress(ProgressStage.FALLBACK_REQUEST, {"method": "httpx"})
                 async with httpx.AsyncClient(
                     follow_redirects=True, timeout=30.0
                 ) as client:
@@ -241,12 +255,16 @@ class WebAssetExtractor:
                     response.raise_for_status()
                     self.content = response.text
                     self.soup = BeautifulSoup(self.content, "lxml")
-                    self._send_progress("fallback_complete", {"status": "success"})
+                    self._send_progress(
+                        ProgressStage.FALLBACK_COMPLETE, {"status": "success"}
+                    )
                     return True
             except Exception as inner_e:
                 inner_error = str(inner_e)
                 traceback.print_exc()
-                self._send_progress("fallback_failed", {"error": inner_error})
+                self._send_progress(
+                    ProgressStage.FALLBACK_FAILED, {"error": inner_error}
+                )
                 print(f"Fallback request also failed: {inner_error}")
                 return False
 
@@ -499,7 +517,7 @@ class WebAssetExtractor:
 
     async def extract_css_colors(self):
         """Extract colors from CSS files and inline styles"""
-        self._send_progress("extracting_colors", {"stage": "css"})
+        self._send_progress(ProgressStage.EXTRACTING_COLORS, {"stage": "css"})
         # Dictionary to track color frequency
         color_frequency = {}
 
@@ -611,7 +629,8 @@ class WebAssetExtractor:
         # Sort colors by count (frequency) in descending order
         self.css_colors = sorted(unique_colors, key=lambda x: x["count"], reverse=True)
         self._send_progress(
-            "colors_extracted", {"count": len(self.css_colors), "source": "css"}
+            ProgressStage.COLORS_EXTRACTED,
+            {"count": len(self.css_colors), "source": "css"},
         )
 
     async def extract_dominant_image_colors(self, max_images=5):
@@ -620,7 +639,8 @@ class WebAssetExtractor:
             :max_images
         ]  # Limit to avoid processing too many images
         self._send_progress(
-            "extracting_colors", {"stage": "images", "count": len(image_urls)}
+            ProgressStage.EXTRACTING_COLORS,
+            {"stage": "images", "count": len(image_urls)},
         )
 
         async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
@@ -682,12 +702,13 @@ class WebAssetExtractor:
             reverse=True,
         )
         self._send_progress(
-            "colors_extracted", {"count": len(self.image_colors), "source": "images"}
+            ProgressStage.COLORS_EXTRACTED,
+            {"count": len(self.image_colors), "source": "images"},
         )
 
     async def extract_fonts(self):
         """Extract fonts from the webpage"""
-        self._send_progress("extracting_fonts", {})
+        self._send_progress(ProgressStage.EXTRACTING_FONTS, {})
         # Check for Google Fonts
         google_fonts_links = self.soup.find_all(
             "link", href=re.compile("fonts.googleapis.com")
@@ -879,15 +900,17 @@ class WebAssetExtractor:
                     print(f"Error processing CSS file {css_url}: {str(e)}")
                     continue
 
-        self._send_progress("fonts_extracted", {"count": len(self.fonts)})
+        self._send_progress(ProgressStage.FONTS_EXTRACTED, {"count": len(self.fonts)})
 
     async def extract_assets(self):
         """Extract all assets from the webpage with improved detection"""
-        self._send_progress("extracting_assets", {"stage": "starting"})
+        self._send_progress(ProgressStage.EXTRACTING_ASSETS, {"stage": "starting"})
         print("Extracting assets")
 
         # Process resources captured during page load
-        self._send_progress("processing_resources", {"count": len(self.page_resources)})
+        self._send_progress(
+            ProgressStage.PROCESSING_RESOURCES, {"count": len(self.page_resources)}
+        )
 
         for resource in self.page_resources:
             url = resource["url"]
@@ -1192,7 +1215,7 @@ class WebAssetExtractor:
         print("Assets extraction complete.")
 
         self._send_progress(
-            "assets_extracted",
+            ProgressStage.ASSETS_EXTRACTED,
             {
                 "images": len(self.assets["images"]),
                 "videos": len(self.assets["videos"]),
@@ -1208,7 +1231,8 @@ class WebAssetExtractor:
         success = await self.fetch_page()
         if not success:
             self._send_progress(
-                "extraction_failed", {"error": "Failed to fetch the webpage"}
+                ProgressStage.EXTRACTION_FAILED,
+                {"error": "Failed to fetch the webpage"},
             )
             return {"error": "Failed to fetch the webpage"}
 
@@ -1225,7 +1249,7 @@ class WebAssetExtractor:
 
         # Mark extraction as complete
         self.extraction_complete = True
-        self._send_progress("extraction_complete", {})
+        self._send_progress(ProgressStage.EXTRACTION_COMPLETE, {})
 
         return {
             "url": self.url,
