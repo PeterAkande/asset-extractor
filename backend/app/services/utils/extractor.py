@@ -20,7 +20,7 @@ import base64
 from typing import Optional, Callable, Dict, Any
 import html
 
-from app.models.models import ProgressStage
+from app.schemas.extractor_schema import ProgressStage
 
 # Suppress cssutils log messages
 cssutils.log.setLevel(logging.CRITICAL)

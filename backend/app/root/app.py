@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import extraction
+
+from app.root.app_routers import api
 import logging
 
 # Configure logging
@@ -28,7 +29,8 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(extraction.router)
+app.include_router(api)
+
 
 @app.get("/")
 async def root():
@@ -45,6 +47,7 @@ async def root():
             "stream_extraction": "/api/extract/sse",
         },
     }
+
 
 # Startup event to log when the app starts
 @app.on_event("startup")

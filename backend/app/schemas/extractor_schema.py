@@ -164,3 +164,13 @@ class CachedResultsList(BaseModel):
     limit: int = Field(..., description="Maximum number of results per page")
     offset: int = Field(..., description="Number of results skipped")
     results: List[CachedResultInfo] = Field(..., description="List of cached results")
+
+
+class URLRequest(BaseModel):
+    url: str
+    force_refresh: bool = False  # Option to force a new extraction even if cached
+
+    class Config: 
+        schema_extra = {
+            "example": {"url": "https://example.com", "force_refresh": False}
+        }

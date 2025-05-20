@@ -1,107 +1,77 @@
-import traceback
-import time
-from datetime import datetime
-from fastapi import APIRouter, HTTPException, Request, Query, Path
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
-from ..utils.extractor import extract_from_url, stream_extraction_from_url
-from ..utils.redis_client import (
-    get_cached_result_by_url,
-    get_cached_result_by_id,
-    store_result_in_cache,
-    list_cached_results,
-    ping_redis,
-)
-import validators
-from ..models.models import (
-    ExtractorResponse,
-    ErrorResponse,
-    ExtractorResult,
-    CachedResultsList,
-    CachedResultInfo,
-)
 import asyncio
+from datetime import datetime
 import json
+import time
 import logging
+import traceback
+import uuid
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
+import validators
+
+from app.root.redis_manager import RedisManager
+from app.schemas.extractor_schema import ExtractorResponse, URLRequest
+
+from app.services.utils import extractor
+
 
 logger = logging.getLogger("extractor-router")
 
-router = APIRouter(
-    prefix="/api",
-    tags=["extraction"],
-    responses={404: {"description": "Not found"}},
-)
+redis_manager = RedisManager()
 
 
-# Add a simple index route for the /api endpoint
-@router.get("/", summary="API Information")
-async def api_index():
+def generate_result_id() -> str:
+    """Generate a unique ID for extraction results"""
+    return str(uuid.uuid4())
+
+
+def get_result_key(result_id: str) -> str:
     """
-    Returns information about the API endpoints.
-    This serves as a simple health check and documentation entry point.
-    """
-    # Check if Redis is available
-    redis_available = ping_redis()
+    Generate a Redis key for the given result ID.
 
-    return {
-        "status": "ok",
-        "version": "1.0.0",
-        "redis_available": redis_available,
-        "endpoints": {
-            "extract": "/api/extract",
-            "stream": "/api/extract/sse",
-            "cache": "/api/cache",
-            "cache_by_id": "/api/cache/{result_id}",
-        },
-        "documentation": "/docs",
-    }
-
-
-class URLRequest(BaseModel):
-    url: str
-    force_refresh: bool = False  # Option to force a new extraction even if cached
-
-    class Config:
-        schema_extra = {
-            "example": {"url": "https://example.com", "force_refresh": False}
-        }
-
-
-@router.post(
-    "/extract",
-    response_model=ExtractorResponse,
-    responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
-)
-async def extract_assets(request: URLRequest):
-    """
-    Extract colors, fonts and assets from a web URL.
-
-    If the URL has been extracted before and cached, returns the cached result
-    unless force_refresh is set to True.
+    Args:
+        result_id: The result ID to generate a key for.
 
     Returns:
-        ExtractorResponse: A structured response containing colors, fonts, and assets from the web page
-
-    Raises:
-        HTTPException: If the URL is invalid or if there's an error during extraction
+        A string representing the Redis key.
     """
+    return f"result:{result_id}"
+
+
+def get_url_key(url: str) -> str:
+    """
+    Generate a Redis key for the given URL.
+
+    Args:
+        url: The URL to generate a key for.
+
+    Returns:
+        A string representing the Redis key.
+    """
+    return f"url:{url}"
+
+
+async def extract_assets(url_request: URLRequest) -> ExtractorResponse:
+
     # Validate URL
-    if not validators.url(request.url):
+    if not validators.url(url_request.url):
         raise HTTPException(status_code=400, detail="Invalid URL format")
 
     try:
         # Check if we have cached results for this URL
-        if not request.force_refresh:
-            cached_result = get_cached_result_by_url(request.url)
+        if not url_request.force_refresh:
+
+            url_key = get_url_key(url_request.url)
+            cached_result = redis_manager.get_cached_json_item(url_key)
+
             if cached_result:
-                logger.info(f"Using cached result for URL: {request.url}")
+                logger.info(f"Using cached result for URL: {url_request.url}")
                 cached_result["cached"] = True
                 return cached_result
 
-        # No cache or force refresh requested, perform extraction
+        # No cache or force refresh url_requested, perform extraction
         start_time = time.time()
-        result = await extract_from_url(request.url)
+        result = await extractor.extract_from_url(url_request.url)
         extraction_time = time.time() - start_time
 
         logger.info(f"Extraction completed in {extraction_time:.2f} seconds")
@@ -113,28 +83,71 @@ async def extract_assets(request: URLRequest):
         result["timestamp"] = datetime.now().isoformat()
 
         # Store result in cache and get a result_id
-        result_id = store_result_in_cache(request.url, result)
+        result_id = generate_result_id()
+        url_key = get_url_key(url_request.url)
 
-        # Add result ID to the result
+        result["url"] = url_request.url
+        result["extraction_time"] = extraction_time
         result["result_id"] = result_id
+
+        redis_manager.cache_json_item(
+            url_key,
+            result,
+            ttl=3600 * 12,
+        )  # Cache the result for 12 hours
+
+        redis_manager.cache_string_item(
+            get_result_key(result_id),
+            url_request.url,
+            ttl=3600 * 12,
+        )  # Cache the result for 12 hours
+
         result["cached"] = False
 
-        return result
+        return ExtractorResponse(**result)
     except Exception as e:
         logger.error(f"Extraction error: {str(e)}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 
-@router.get("/extract/sse")
-async def extract_assets_sse(
-    request: Request,
-    url: str = Query(..., description="URL to extract assets from"),
-    force_refresh: bool = Query(False, description="Force a refresh even if cached"),
-):
+async def get_cached_result_by_id(result_id: str) -> ExtractorResponse:
     """
-    Stream extraction progress and results using Server-Sent Events (SSE)
+    Get a cached result by its ID.
+
+    Args:
+        result_id: The unique ID of the cached result.
+
+    Returns:
+        The cached result as an ExtractorResponse object.
     """
+    try:
+
+        # Get the cache result key
+        result_key = get_result_key(result_id)
+
+        # Check if we have a mapping from result_id to URL
+        url = redis_manager.get_cached_string_item(result_key)
+        if not url:
+            raise HTTPException(status_code=404, detail="Result not found")
+
+        # If found, get the actual result using the url
+        cached_result = redis_manager.get_cached_json_item(get_url_key(url))
+
+        if cached_result:
+            # If found, return the actual result using the ID
+            cached_result["cached"] = True
+            return ExtractorResponse(**cached_result)
+
+        raise HTTPException(status_code=404, detail="Result not found")
+    except Exception as e:
+        logger.error(f"Error retrieving cached result: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+
+#### Streaming sse
+async def extract_assets_sse(url: str, force_refresh: bool):
     if not url:
         return StreamingResponse(
             content=stream_error_message("Missing URL parameter"),
@@ -149,7 +162,9 @@ async def extract_assets_sse(
 
     # Check for cached results if not forcing refresh
     if not force_refresh:
-        cached_result = get_cached_result_by_url(url)
+        url_key = get_url_key(url)
+        cached_result = redis_manager.get_cached_json_item(url_key)
+
         if cached_result:
             return StreamingResponse(
                 content=stream_cached_result(cached_result),
@@ -159,57 +174,6 @@ async def extract_assets_sse(
     return StreamingResponse(
         content=stream_extraction(url), media_type="text/event-stream"
     )
-
-
-@router.get(
-    "/cache", response_model=CachedResultsList, summary="List cached extraction results"
-)
-async def list_cache(
-    limit: int = Query(20, description="Maximum number of results to return"),
-    offset: int = Query(0, description="Number of results to skip"),
-):
-    """
-    List available cached extraction results with pagination.
-    """
-    try:
-        results = list_cached_results(limit=limit, offset=offset)
-        return results
-    except Exception as e:
-        logger.error(f"Error listing cached results: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to list cached results: {str(e)}"
-        )
-
-
-@router.get(
-    "/cache/{result_id}",
-    response_model=ExtractorResponse,
-    responses={404: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
-    summary="Get cached extraction result by ID",
-)
-async def get_cached_result(
-    result_id: str = Path(..., description="ID of the cached result to retrieve")
-):
-    """
-    Retrieve a cached extraction result by its ID.
-    """
-    try:
-        result = get_cached_result_by_id(result_id)
-        if not result:
-            raise HTTPException(
-                status_code=404, detail=f"No cached result found with ID: {result_id}"
-            )
-
-        # Mark as cached
-        result["cached"] = True
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error retrieving cached result: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve cached result: {str(e)}"
-        )
 
 
 async def stream_cached_result(result):
@@ -247,7 +211,7 @@ async def stream_extraction(url):
 
         # Start extraction in background task
         extraction_task = asyncio.create_task(
-            stream_extraction_from_url(url, progress_callback)
+            extractor.stream_extraction_from_url(url, progress_callback)
         )
 
         # Stream progress updates
@@ -280,10 +244,27 @@ async def stream_extraction(url):
                             extraction_result["timestamp"] = datetime.now().isoformat()
 
                             # Store in cache and get ID
-                            result_id = store_result_in_cache(url, extraction_result)
+                            result_id = generate_result_id()
+                            url_key = get_url_key(url)
+
                             extraction_result["result_id"] = result_id
+                            extraction_result["url"] = url
+                            extraction_result["cached"] = False
+
+                            redis_manager.cache_json_item(
+                                url_key,
+                                extraction_result,
+                                ttl=3600 * 12,
+                            )
+
+                            redis_manager.cache_string_item(
+                                get_result_key(result_id),
+                                url,
+                                ttl=3600 * 12,
+                            )  # Cache the result for 12 hours
 
                             # Ensure the result has the expected structure
+                            """
                             safe_result = {
                                 "url": url,
                                 "result_id": result_id,
@@ -327,8 +308,10 @@ async def stream_extraction(url):
                                     ),
                                 },
                             }
+                            
+                            """
                             queue.put_nowait(
-                                {"event": "complete", "result": safe_result}
+                                {"event": "complete", "result": extraction_result}
                             )
                     except Exception as e:
                         traceback.print_exc()

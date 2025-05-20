@@ -20,7 +20,7 @@ trap cleanup SIGINT
 
 # Start the backend server
 echo -e "${BLUE}Starting backend server at http://localhost:8000${NC}"
-cd backend && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
+cd backend && python -m uvicorn app.root.app:app --reload --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 
 # Wait a moment to ensure backend starts properly

@@ -124,8 +124,9 @@ const ResultsPage = () => {
           </div>
         ) : error ? (
           <div className="error-container">
-            <h3>Error Loading Results</h3>
-            <p>{error}</p>
+            <h3 style={{ color: 'black' }}>Error Loading Results</h3>
+            <p style={{ color: 'black' }}>{error}</p>
+            <br></br>
             <button className="primary-button" onClick={handleExtractAnother}>
               Extract Another Website
             </button>
