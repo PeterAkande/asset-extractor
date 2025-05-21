@@ -2,6 +2,23 @@
 
 A powerful tool for extracting colors, fonts, and assets from any website. This application provides a beautiful and intuitive interface to analyze web design elements and extract them for your own use.
 
+# Access the deployed version
+- Frontend: https://assetx.peterakande.com
+- Backend: https://assetx.peterakande.com/api
+- MCP server: https://assetx.peterakande.com/mcp (Connect via https://assetx.peterakande.com/mcp/sse)
+For the MCP server, an example in cursor would be
+```json
+{
+  "mcpServers": {
+    "website-asset-extractor": {
+      "url": "https://assetx.peterakande.com/mcp/sse"
+    }
+  }
+}
+```
+
+Note: MCP isnt too stable yet, I get an ER_DISCONNECT or client close sometimes, looking at that
+
 ## Features
 
 - Extract color palettes from CSS and images
@@ -25,6 +42,7 @@ The project is divided into two main parts:
 - Pillow
 - extcolors
 - httpx
+- MCP
 
 ### Frontend
 - React

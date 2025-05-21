@@ -18,13 +18,13 @@ mcp_app = FastMCP(
 
 @mcp_app.tool(
     name="extract_assets",
-    description="Extracts web assets like colors, fonts, images, etc., from a given URL.",
+    description="Automatically analyzes any website URL and extracts key visual and design elements such as colors, fonts, images, and other assets used on the site.",
 )
 async def extract_all_assets(
     url: str,
 ) -> ExtractorResponse:
     """
-    Extracts web assets like colors, fonts, images, etc., from a given URL.
+    Automatically analyzes any website URL and extracts key visual and design elements such as colors, fonts, images, and other assets used on the site..
     """
 
     print(f"Extracting assets from URL: {url}")
