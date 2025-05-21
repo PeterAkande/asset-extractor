@@ -48,7 +48,7 @@ async def api_index():
     response_model=ExtractorResponse,
     responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
 )
-async def extract_assets(request: URLRequest):
+async def extract_assets(url_request: URLRequest):
     """
     Extract colors, fonts and assets from a web URL.
 
@@ -62,7 +62,7 @@ async def extract_assets(request: URLRequest):
         HTTPException: If the URL is invalid or if there's an error during extraction
     """
 
-    return await extractor_service.extract_assets(request)
+    return await extractor_service.extract_assets(url_request)
 
 
 @router.get("/extract/sse")

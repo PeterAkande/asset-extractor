@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.root.app_routers import api
+from app.routers.mcp_router import mcp_app
 import logging
 
 # Configure logging
@@ -30,6 +31,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(api)
+app.mount("/mcp", mcp_app.sse_app())
 
 
 @app.get("/")
@@ -53,4 +55,6 @@ async def root():
 @app.on_event("startup")
 async def startup_event():
     logger.info("Asset Extractor API started")
-    logger.info("Available endpoints: /, /api, /api/extract, /api/extract/sse, /docs")
+    logger.info(
+        "Available endpoints: /, /api, /api/extract, /api/extract/sse, /docs, /mcp"
+    )
