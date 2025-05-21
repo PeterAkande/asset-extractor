@@ -1,7 +1,6 @@
 from mcp.server.fastmcp import FastMCP
 
 from app.schemas.extractor_schema import (
-    ErrorResponse,
     ExtractorResponse,
     URLRequest,
 )
@@ -26,9 +25,6 @@ async def extract_all_assets(
     """
     Automatically analyzes any website URL and extracts key visual and design elements such as colors, fonts, images, and other assets used on the site..
     """
-
-    print(f"Extracting assets from URL: {url}")
-
 
     url_request = URLRequest(url=url)
     return await extractor_service.extract_assets(url_request)
