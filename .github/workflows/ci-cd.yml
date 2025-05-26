@@ -301,9 +301,9 @@ jobs:
                   proxy_send_timeout 300s;
                   proxy_read_timeout 3600s;
                   
-                  # Buffer settings for streaming - fixed to have at least 2 buffers
+                  # Buffer settings for streaming - fixed buffer size constraints
                   proxy_buffer_size 4k;
-                  proxy_buffers 2 4k;
+                  proxy_buffers 4 4k;
                   proxy_busy_buffers_size 8k;
                   
                   # Add CORS headers
@@ -349,9 +349,10 @@ jobs:
                   proxy_send_timeout 86400s;
                   proxy_read_timeout 86400s;
                   
-                  # Minimal buffer settings - fixed to have at least 2 buffers
+                  # Minimal buffer settings - fixed buffer size constraints
                   proxy_buffer_size 1k;
-                  proxy_buffers 2 1k;
+                  proxy_buffers 4 1k;
+                  proxy_busy_buffers_size 2k;
                   
                   # SSE-specific headers
                   add_header 'Access-Control-Allow-Origin' '*' always;
