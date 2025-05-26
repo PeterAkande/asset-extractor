@@ -263,6 +263,34 @@ jobs:
               access_log /var/log/nginx/assets-extractor-access.log;
               error_log /var/log/nginx/assets-extractor-error.log;
               
+              # Special handling for SSE endpoints (must come first for specificity)
+              location ~ ^/(api|mcp)/.*(stream|events|sse) {
+                  proxy_pass http://127.0.0.1:8000;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_set_header Connection "";
+                  
+                  # Critical SSE settings - disable all buffering
+                  proxy_buffering off;
+                  proxy_cache off;
+                  proxy_request_buffering off;
+                  proxy_max_temp_file_size 0;
+                  
+                  # Extended timeouts for long-running connections
+                  proxy_read_timeout 86400s;  # 24 hours
+                  proxy_connect_timeout 60s;
+                  proxy_send_timeout 86400s;
+                  
+                  # Add CORS headers for SSE
+                  add_header 'Access-Control-Allow-Origin' '*' always;
+                  add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+                  add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Accept' always;
+                  add_header 'Access-Control-Expose-Headers' 'Content-Type,Cache-Control' always;
+              }
+              
               # API requests with proper proxy settings
               location ~ ^/(api|mcp)/ {
                   proxy_pass http://127.0.0.1:8000;
@@ -272,9 +300,9 @@ jobs:
                   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
                   proxy_set_header X-Forwarded-Proto \$scheme;
                   proxy_set_header Upgrade \$http_upgrade;
-                  proxy_set_header Connection 'upgrade';
+                  proxy_set_header Connection "";
                   
-                  # Timeouts and buffering settings
+                  # Timeouts and buffering settings for regular API calls
                   proxy_buffering off;
                   proxy_cache off;
                   proxy_read_timeout 3600s;
