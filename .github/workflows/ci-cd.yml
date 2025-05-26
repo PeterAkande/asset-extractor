@@ -241,8 +241,14 @@ jobs:
           Environment="HOME=/home/${CURRENT_USER}"
           Environment="PLAYWRIGHT_BROWSERS_PATH=/usr/local/share/playwright"
           Environment="DISPLAY=:99"
-          ExecStart=/var/www/assets_extractor/backend/venv/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.root.app:app -b 127.0.0.1:8000
+          ExecStart=/var/www/assets_extractor/backend/venv/bin/gunicorn -w 1 -k uvicorn.workers.UvicornWorker app.root.app:app -b 127.0.0.1:8000 --timeout 300 --keep-alive 300 --max-requests 0 --max-requests-jitter 0
           Restart=always
+          RestartSec=5
+          StandardOutput=journal
+          StandardError=journal
+          KillMode=mixed
+          KillSignal=SIGTERM
+          TimeoutStopSec=30
           
           [Install]
           WantedBy=multi-user.target
@@ -263,35 +269,14 @@ jobs:
               access_log /var/log/nginx/assets-extractor-access.log;
               error_log /var/log/nginx/assets-extractor-error.log;
               
-              # Special handling for SSE endpoints (must come first for specificity)
-              location ~ ^/(api|mcp)/.*(stream|events|sse) {
-                  proxy_pass http://127.0.0.1:8000;
-                  proxy_http_version 1.1;
-                  proxy_set_header Host \$host;
-                  proxy_set_header X-Real-IP \$remote_addr;
-                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto \$scheme;
-                  proxy_set_header Connection "";
-                  
-                  # Critical SSE settings - disable all buffering
-                  proxy_buffering off;
-                  proxy_cache off;
-                  proxy_request_buffering off;
-                  proxy_max_temp_file_size 0;
-                  
-                  # Extended timeouts for long-running connections
-                  proxy_read_timeout 86400s;  # 24 hours
-                  proxy_connect_timeout 60s;
-                  proxy_send_timeout 86400s;
-                  
-                  # Add CORS headers for SSE
-                  add_header 'Access-Control-Allow-Origin' '*' always;
-                  add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-                  add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Accept' always;
-                  add_header 'Access-Control-Expose-Headers' 'Content-Type,Cache-Control' always;
-              }
+              # Increase client body size for file uploads
+              client_max_body_size 100M;
               
-              # API requests with proper proxy settings
+              # Keep-alive settings for persistent connections
+              keepalive_timeout 300s;
+              keepalive_requests 1000;
+              
+              # API requests with proper proxy settings for SSE
               location ~ ^/(api|mcp)/ {
                   proxy_pass http://127.0.0.1:8000;
                   proxy_http_version 1.1;
@@ -300,17 +285,78 @@ jobs:
                   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
                   proxy_set_header X-Forwarded-Proto \$scheme;
                   proxy_set_header Upgrade \$http_upgrade;
-                  proxy_set_header Connection "";
+                  proxy_set_header Connection 'upgrade';
                   
-                  # Timeouts and buffering settings for regular API calls
+                  # Critical SSE settings - disable buffering completely
                   proxy_buffering off;
                   proxy_cache off;
+                  proxy_request_buffering off;
+                  
+                  # SSE-specific headers
+                  proxy_set_header Cache-Control no-cache;
+                  proxy_set_header X-Accel-Buffering no;
+                  
+                  # Extended timeouts for SSE connections
+                  proxy_connect_timeout 60s;
+                  proxy_send_timeout 300s;
                   proxy_read_timeout 3600s;
+                  
+                  # Buffer settings for streaming
+                  proxy_buffer_size 4k;
+                  proxy_buffers 8 4k;
+                  proxy_busy_buffers_size 8k;
                   
                   # Add CORS headers
                   add_header 'Access-Control-Allow-Origin' '*' always;
                   add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-                  add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range' always;
+                  add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
+                  add_header 'Access-Control-Allow-Credentials' 'true' always;
+                  
+                  # Handle preflight requests
+                  if (\$request_method = 'OPTIONS') {
+                      add_header 'Access-Control-Allow-Origin' '*' always;
+                      add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+                      add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
+                      add_header 'Access-Control-Max-Age' 1728000;
+                      add_header 'Content-Type' 'text/plain charset=UTF-8';
+                      add_header 'Content-Length' 0;
+                      return 204;
+                  }
+              }
+              
+              # Special handling for SSE endpoints with even more aggressive settings
+              location ~ ^/(api|mcp)/.*/(events|stream|sse) {
+                  proxy_pass http://127.0.0.1:8000;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_set_header Connection '';
+                  
+                  # Completely disable all buffering for SSE
+                  proxy_buffering off;
+                  proxy_cache off;
+                  proxy_request_buffering off;
+                  proxy_max_temp_file_size 0;
+                  
+                  # Force no buffering headers
+                  proxy_set_header Cache-Control no-cache;
+                  proxy_set_header X-Accel-Buffering no;
+                  
+                  # Very long timeouts for SSE streams
+                  proxy_connect_timeout 60s;
+                  proxy_send_timeout 86400s;
+                  proxy_read_timeout 86400s;
+                  
+                  # Minimal buffer settings
+                  proxy_buffer_size 1k;
+                  proxy_buffers 1 1k;
+                  
+                  # SSE-specific headers
+                  add_header 'Access-Control-Allow-Origin' '*' always;
+                  add_header 'Access-Control-Allow-Credentials' 'true' always;
+                  add_header 'Cache-Control' 'no-cache' always;
               }
               
               # Frontend static files
@@ -318,6 +364,13 @@ jobs:
                   root /var/www/assets_extractor/frontend;
                   try_files \$uri \$uri/ /index.html =404;
                   autoindex off;
+                  
+                  # Cache static assets
+                  location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\$ {
+                      expires 1y;
+                      add_header Cache-Control "public, immutable";
+                  }
+                  
                   # Add proper content type for JS and CSS
                   types {
                       text/html               html htm shtml;
